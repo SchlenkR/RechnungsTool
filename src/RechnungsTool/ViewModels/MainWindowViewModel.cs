@@ -20,6 +20,9 @@ namespace RechnungsTool.ViewModels;
 /// </summary>
 public partial class ListenEintrag : ObservableObject
 {
+    static readonly System.Globalization.CultureInfo DeDe =
+        System.Globalization.CultureInfo.GetCultureInfo("de-DE");
+
     public RechnungsDatei? Datei { get; init; }
 
     /// <summary>Offener Editor dieser Rechnung (Quelle des Dirty-Flags), null wenn nicht geöffnet.</summary>
@@ -57,6 +60,17 @@ public partial class ListenEintrag : ObservableObject
             return zusatz.Length > 0 ? $"{name} · {zusatz}" : name;
         }
     }
+
+    // Spalten der tabellarischen (ausgeklappten) Darstellung
+    public string DatumText =>
+        (Editor?.Datum?.Date ?? Datei?.Rechnung?.Datum)?.ToString("dd.MM.yyyy") ?? "";
+
+    public string ZeitraumText =>
+        Editor?.Leistungszeitraum ?? Datei?.Rechnung?.Leistungszeitraum ?? "";
+
+    public string SummeText =>
+        Editor?.SummeText
+        ?? (Datei?.Rechnung is { } r ? r.Gesamtbetrag.ToString("N2", DeDe) + " €" : "");
 
     /// <summary>Jahr für die Gruppierung (aus der Nummer, sonst aus dem Datum).</summary>
     public int Jahr
@@ -119,6 +133,8 @@ public partial class ListenEintrag : ObservableObject
             or nameof(RechnungEditorViewModel.EmpfaengerName)
             or nameof(RechnungEditorViewModel.EmpfaengerZusatz)
             or nameof(RechnungEditorViewModel.Datum)
+            or nameof(RechnungEditorViewModel.Leistungszeitraum)
+            or nameof(RechnungEditorViewModel.SummeText)
             or nameof(RechnungEditorViewModel.FehlerAnzahl)
             or nameof(RechnungEditorViewModel.Gesperrt))
         {
@@ -130,6 +146,9 @@ public partial class ListenEintrag : ObservableObject
     {
         OnPropertyChanged(nameof(Titel));
         OnPropertyChanged(nameof(EmpfaengerZeile));
+        OnPropertyChanged(nameof(DatumText));
+        OnPropertyChanged(nameof(ZeitraumText));
+        OnPropertyChanged(nameof(SummeText));
         OnPropertyChanged(nameof(ProblemText));
         OnPropertyChanged(nameof(HatProblem));
         OnPropertyChanged(nameof(Gesperrt));
@@ -161,6 +180,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string? ordnerWarnung;
     [ObservableProperty] private bool papierkorbVorhanden;
     [ObservableProperty] private string suchText = "";
+
+    /// <summary>Übersicht ausgeklappt: volle Breite, tabellarische Darstellung.</summary>
+    [ObservableProperty] private bool uebersichtErweitert;
 
     ListenEintrag? _letzteAuswahl;
 
