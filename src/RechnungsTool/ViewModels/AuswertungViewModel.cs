@@ -9,6 +9,14 @@ namespace RechnungsTool.ViewModels;
 
 public record BalkenZeile(string Beschriftung, string BetragText, double Balken);
 
+public record KennzahlenZeile(
+    string Jahr,
+    string Umsatz,
+    string Anzahl,
+    string Durchschnitt,
+    string GroessteRechnung,
+    Avalonia.Media.FontWeight Gewicht);
+
 /// <summary>
 /// Kennzahlen über alle aktiven Rechnungen (ohne Papierkorb, ohne defekte Dateien).
 /// Wird beim Öffnen des Auswertungs-Dialogs frisch berechnet.
@@ -18,12 +26,7 @@ public class AuswertungViewModel : ViewModelBase
     static readonly CultureInfo DeDe = CultureInfo.GetCultureInfo("de-DE");
     const double MaxBalken = 280;
 
-    public string GesamtumsatzText { get; }
-    public string AnzahlText { get; }
-    public string DurchschnittText { get; }
-    public string GroessteRechnungText { get; }
-    public string LaufendesJahrText { get; }
-
+    public List<KennzahlenZeile> KennzahlenProJahr { get; }
     public List<BalkenZeile> UmsatzProJahr { get; }
     public List<BalkenZeile> TopKunden { get; }
 
@@ -38,19 +41,19 @@ public class AuswertungViewModel : ViewModelBase
         var alle = rechnungen.OrderBy(r => r.Datum).ToList();
         var gesamt = alle.Sum(r => r.Gesamtbetrag);
 
-        GesamtumsatzText = Euro(gesamt);
-        AnzahlText = alle.Count.ToString(DeDe);
-        DurchschnittText = alle.Count == 0 ? "–" : Euro(gesamt / alle.Count);
-
-        var groesste = alle.OrderByDescending(r => r.Gesamtbetrag).FirstOrDefault();
-        GroessteRechnungText = groesste is null ? "–" : $"{Euro(groesste.Gesamtbetrag)} ({groesste.Nummer})";
-
-        var jahr = DateTime.Today.Year;
-        LaufendesJahrText = Euro(alle.Where(r => r.Datum.Year == jahr).Sum(r => r.Gesamtbetrag));
-
-        UmsatzProJahr = Balken(alle
-            .GroupBy(r => r.Datum.Year)
+        // Kennzahlen pro Jahr (Zuordnung wie die Gruppierung in der Übersicht),
+        // darunter eine Gesamtzeile
+        var proJahr = alle
+            .GroupBy(JahrVon)
             .OrderByDescending(g => g.Key)
+            .ToList();
+        KennzahlenProJahr = proJahr
+            .Select(g => Kennzahlen(g.Key.ToString(), g.ToList(), Avalonia.Media.FontWeight.Normal))
+            .ToList();
+        if (alle.Count > 0)
+            KennzahlenProJahr.Add(Kennzahlen("Gesamt", alle, Avalonia.Media.FontWeight.SemiBold));
+
+        UmsatzProJahr = Balken(proJahr
             .Select(g => (g.Key.ToString(), g.Sum(r => r.Gesamtbetrag))));
 
         TopKunden = Balken(alle
@@ -80,6 +83,23 @@ public class AuswertungViewModel : ViewModelBase
                 KumulierterVerlauf.Add(new Point(x, y));
             }
         }
+    }
+
+    /// <summary>Jahreszuordnung wie in der Übersicht: aus der Nummer, sonst aus dem Datum.</summary>
+    static int JahrVon(Rechnung r) =>
+        Services.Rechnungsnummern.TryParse(r.Nummer, out var jahr, out _) ? jahr : r.Datum.Year;
+
+    static KennzahlenZeile Kennzahlen(string jahr, List<Rechnung> rechnungen, Avalonia.Media.FontWeight gewicht)
+    {
+        var summe = rechnungen.Sum(r => r.Gesamtbetrag);
+        var groesste = rechnungen.OrderByDescending(r => r.Gesamtbetrag).First();
+        return new KennzahlenZeile(
+            jahr,
+            Euro(summe),
+            rechnungen.Count.ToString(DeDe),
+            Euro(summe / rechnungen.Count),
+            $"{Euro(groesste.Gesamtbetrag)} ({groesste.Nummer})",
+            gewicht);
     }
 
     static List<BalkenZeile> Balken(IEnumerable<(string Beschriftung, decimal Summe)> zeilen)

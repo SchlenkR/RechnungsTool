@@ -13,19 +13,28 @@
 
             <Border Classes="card">
                 <StackPanel Spacing="10">
-                    <TextBlock Text="KENNZAHLEN" Classes="cardTitle"/>
-                    <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Gesamtumsatz" Classes="label"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding GesamtumsatzText}" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Umsatz laufendes Jahr" Classes="label" Margin="0,6,0,0"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LaufendesJahrText}" Margin="0,6,0,0"/>
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Anzahl Rechnungen" Classes="label" Margin="0,6,0,0"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AnzahlText}" Margin="0,6,0,0"/>
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Ø Rechnungsbetrag" Classes="label" Margin="0,6,0,0"/>
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurchschnittText}" Margin="0,6,0,0"/>
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Größte Rechnung" Classes="label" Margin="0,6,0,0"/>
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding GroessteRechnungText}" Margin="0,6,0,0"/>
+                    <TextBlock Text="KENNZAHLEN PRO JAHR" Classes="cardTitle"/>
+                    <Grid ColumnDefinitions="80,140,110,140,*">
+                        <TextBlock Grid.Column="0" Text="Jahr" Classes="hint" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="1" Text="Umsatz" Classes="hint" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="2" Text="Rechnungen" Classes="hint" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="3" Text="Ø Betrag" Classes="hint" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="4" Text="Größte Rechnung" Classes="hint" FontWeight="SemiBold"/>
                     </Grid>
+                    <ItemsControl ItemsSource="{Binding KennzahlenProJahr}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:KennzahlenZeile">
+                                <Grid ColumnDefinitions="80,140,110,140,*" Margin="0,3">
+                                    <TextBlock Grid.Column="0" Text="{Binding Jahr}" FontWeight="{Binding Gewicht}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Umsatz}" FontWeight="{Binding Gewicht}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Anzahl}" FontWeight="{Binding Gewicht}"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding Durchschnitt}" FontWeight="{Binding Gewicht}"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding GroessteRechnung}" FontWeight="{Binding Gewicht}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 
