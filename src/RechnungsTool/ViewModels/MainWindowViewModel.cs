@@ -58,15 +58,30 @@ public partial class ListenEintrag : ObservableObject
         }
     }
 
-    public string DatumZeile
+    /// <summary>Jahr für die Gruppierung (aus der Nummer, sonst aus dem Datum).</summary>
+    public int Jahr
     {
         get
         {
-            if (Datei is { HatFehler: true })
-                return "";
-            var datum = Editor?.Datum?.Date ?? Datei?.Rechnung?.Datum;
-            return datum?.ToString("dd.MM.yyyy") ?? "";
+            var nummer = Editor?.Nummer ?? Datei?.Rechnung?.Nummer;
+            if (Rechnungsnummern.TryParse(nummer, out var jahr, out _))
+                return jahr;
+            return Editor?.Datum?.Year ?? Datei?.Rechnung?.Datum.Year ?? DateTime.Today.Year;
         }
+    }
+
+    /// <summary>Einfache Volltextsuche über alle relevanten Rechnungsfelder.</summary>
+    public bool Passt(string filter)
+    {
+        var r = Datei?.Rechnung;
+        var felder = new[]
+        {
+            Titel, EmpfaengerZeile,
+            r?.Empfaenger.Strasse, r?.Empfaenger.Plz, r?.Empfaenger.Ort,
+            r?.Leistungszeitraum, r?.Hinweis,
+        };
+        return felder.Any(f => f?.Contains(filter, StringComparison.OrdinalIgnoreCase) == true)
+               || r?.Positionen.Any(p => p.Text.Contains(filter, StringComparison.OrdinalIgnoreCase)) == true;
     }
 
     /// <summary>Bei offenem Editor live aus dessen Validierung, sonst aus dem Lade-Scan.</summary>
@@ -115,11 +130,18 @@ public partial class ListenEintrag : ObservableObject
     {
         OnPropertyChanged(nameof(Titel));
         OnPropertyChanged(nameof(EmpfaengerZeile));
-        OnPropertyChanged(nameof(DatumZeile));
         OnPropertyChanged(nameof(ProblemText));
         OnPropertyChanged(nameof(HatProblem));
         OnPropertyChanged(nameof(Gesperrt));
     }
+}
+
+/// <summary>Jahres-Überschrift in der Rechnungsübersicht (nicht selektierbar).</summary>
+public class JahresKopf
+{
+    public JahresKopf(int jahr) => Jahr = jahr;
+    public int Jahr { get; }
+    public string Text => Jahr.ToString();
 }
 
 public partial class MainWindowViewModel : ViewModelBase
@@ -134,10 +156,13 @@ public partial class MainWindowViewModel : ViewModelBase
     EinstellungenViewModel? _einstellungenSeite;
 
     [ObservableProperty] private ViewModelBase? aktuelleSeite;
-    [ObservableProperty] private ListenEintrag? ausgewaehlterEintrag;
+    [ObservableProperty] private object? ausgewaehlterEintrag;   // ListenEintrag oder JahresKopf
     [ObservableProperty] private ListenEintrag? ausgewaehlterPapierkorbEintrag;
     [ObservableProperty] private string? ordnerWarnung;
     [ObservableProperty] private bool papierkorbVorhanden;
+    [ObservableProperty] private string suchText = "";
+
+    ListenEintrag? _letzteAuswahl;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(AlleSpeichernAusfuehrenCommand))]
@@ -155,8 +180,15 @@ public partial class MainWindowViewModel : ViewModelBase
     readonly OrdnerWaechter _waechter = new();
     [ObservableProperty] private bool externeAenderung;
 
-    public ObservableCollection<ListenEintrag> Eintraege { get; } = new();
+    // Gesamtbestand; die sichtbaren Collections entstehen daraus per Suche + Jahresgruppierung
+    readonly List<ListenEintrag> _alleEintraege = new();
+    readonly List<ListenEintrag> _allePapierkorb = new();
+
+    /// <summary>Sichtbare Übersicht: JahresKopf- und ListenEintrag-Elemente.</summary>
+    public ObservableCollection<object> Eintraege { get; } = new();
     public ObservableCollection<ListenEintrag> PapierkorbEintraege { get; } = new();
+
+    public int AnzahlRechnungen => _alleEintraege.Count;
 
     public Stammdaten? Stammdaten { get; private set; }
     public PdfDienst Pdf { get; } = new();
@@ -180,12 +212,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _config = AppConfig.Laden();
         ListeAktualisieren(null);
 
-        // Ohne Stammdaten direkt auf der Stammdatenseite starten,
+        // Ohne Stammdaten direkt den Stammdaten-Dialog öffnen (nach Fensteraufbau),
         // sonst die neueste Rechnung öffnen
         if (Stammdaten is null)
-            StammdatenOeffnen();
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => StammdatenOeffnenCommand.Execute(null),
+                Avalonia.Threading.DispatcherPriority.Background);
         else
-            AusgewaehlterEintrag = Eintraege.FirstOrDefault(e => e.Datei is { HatFehler: false });
+            AusgewaehlterEintrag = Eintraege.OfType<ListenEintrag>()
+                .FirstOrDefault(e => e.Datei is { HatFehler: false });
 
         _ = UpdatePruefenAsync();
 
@@ -267,20 +302,20 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             // Alte Einträge vom Editor-PropertyChanged abmelden
-            foreach (var alter in Eintraege)
+            foreach (var alter in _alleEintraege)
                 alter.Editor = null;
 
-            Eintraege.Clear();
+            _alleEintraege.Clear();
             foreach (var editor in _neueEditoren)
-                Eintraege.Add(new ListenEintrag { Editor = editor });
+                _alleEintraege.Add(new ListenEintrag { Editor = editor });
             foreach (var datei in Sortiert(inhalt.Rechnungen))
-                Eintraege.Add(EintragErzeugen(datei, alleNummern));
+                _alleEintraege.Add(EintragErzeugen(datei, alleNummern));
 
-            PapierkorbEintraege.Clear();
+            _allePapierkorb.Clear();
             foreach (var datei in Sortiert(inhalt.Papierkorb))
-                PapierkorbEintraege.Add(new ListenEintrag { Datei = datei });
-            PapierkorbVorhanden = PapierkorbEintraege.Count > 0;
+                _allePapierkorb.Add(new ListenEintrag { Datei = datei });
 
+            SichtbarAktualisieren();
             AuswahlWiederherstellen(auswaehlenPfad);
         }
         finally
@@ -288,17 +323,57 @@ public partial class MainWindowViewModel : ViewModelBase
             _unterdrueckeOeffnen = false;
         }
 
+        OnPropertyChanged(nameof(AnzahlRechnungen));
         DirtyNeuBerechnen();
     }
+
+    /// <summary>Baut die sichtbaren Listen aus dem Gesamtbestand: Suche + Jahresgruppierung.</summary>
+    void SichtbarAktualisieren()
+    {
+        var vorher = _unterdrueckeOeffnen;
+        _unterdrueckeOeffnen = true;
+        try
+        {
+            var filter = SuchText.Trim();
+            bool Sichtbar(ListenEintrag e) => filter.Length == 0 || e.Passt(filter);
+
+            Eintraege.Clear();
+            foreach (var gruppe in _alleEintraege.Where(Sichtbar)
+                         .GroupBy(e => e.Jahr)
+                         .OrderByDescending(g => g.Key))
+            {
+                Eintraege.Add(new JahresKopf(gruppe.Key));
+                foreach (var eintrag in gruppe)
+                    Eintraege.Add(eintrag);
+            }
+
+            PapierkorbEintraege.Clear();
+            foreach (var eintrag in _allePapierkorb.Where(Sichtbar))
+                PapierkorbEintraege.Add(eintrag);
+            PapierkorbVorhanden = PapierkorbEintraege.Count > 0;
+
+            // Auswahl nur behalten, wenn der Eintrag noch sichtbar ist
+            if (AusgewaehlterEintrag is ListenEintrag aktuelle && !Eintraege.Contains(aktuelle))
+                AusgewaehlterEintrag = null;
+        }
+        finally
+        {
+            _unterdrueckeOeffnen = vorher;
+        }
+    }
+
+    partial void OnSuchTextChanged(string value) => SichtbarAktualisieren();
 
     void AuswahlWiederherstellen(string? pfad)
     {
         // Der gerade geöffnete Editor behält Vorrang vor dem zuletzt gespeicherten Pfad,
         // damit z. B. Speichern aus der Liste die Auswahl nicht verschiebt
+        var sichtbare = Eintraege.OfType<ListenEintrag>().ToList();
         var eintrag =
-            Eintraege.FirstOrDefault(e => e.Editor is not null && ReferenceEquals(e.Editor, AktuelleSeite))
-            ?? (pfad is null ? null : Eintraege.FirstOrDefault(e => e.Datei?.Pfad == pfad));
+            sichtbare.FirstOrDefault(e => e.Editor is not null && ReferenceEquals(e.Editor, AktuelleSeite))
+            ?? (pfad is null ? null : sichtbare.FirstOrDefault(e => e.Datei?.Pfad == pfad));
         AusgewaehlterEintrag = eintrag;
+        _letzteAuswahl = eintrag;
         AusgewaehlterPapierkorbEintrag = eintrag is not null || pfad is null
             ? null
             : PapierkorbEintraege.FirstOrDefault(e => e.Datei?.Pfad == pfad);
@@ -334,13 +409,23 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // --- Auswahl / Navigation ----------------------------------------------
 
-    partial void OnAusgewaehlterEintragChanged(ListenEintrag? value)
+    partial void OnAusgewaehlterEintragChanged(object? value)
     {
         if (_unterdrueckeOeffnen || value is null)
             return;
 
-        AuswahlSetzen(value, papierkorb: false);
-        EintragOeffnen(value, nurLesen: false);
+        // Jahresköpfe sind nicht selektierbar – Auswahl zurückspringen lassen
+        if (value is not ListenEintrag eintrag)
+        {
+            _unterdrueckeOeffnen = true;
+            AusgewaehlterEintrag = _letzteAuswahl;
+            _unterdrueckeOeffnen = false;
+            return;
+        }
+
+        _letzteAuswahl = eintrag;
+        AuswahlSetzen(eintrag, papierkorb: false);
+        EintragOeffnen(eintrag, nurLesen: false);
     }
 
     partial void OnAusgewaehlterPapierkorbEintragChanged(ListenEintrag? value)
@@ -356,6 +441,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _unterdrueckeOeffnen = true;
         AusgewaehlterEintrag = papierkorb ? null : eintrag;
+        _letzteAuswahl = papierkorb ? null : eintrag;
         AusgewaehlterPapierkorbEintrag = papierkorb ? eintrag : null;
         _unterdrueckeOeffnen = false;
     }
@@ -475,15 +561,23 @@ public partial class MainWindowViewModel : ViewModelBase
         var editor = EditorErzeugen(rechnung, null, nurLesen: false);
         AktuelleSeite = editor;
         ListeAktualisieren(null);
-        AuswahlSetzen(Eintraege.FirstOrDefault(e => ReferenceEquals(e.Editor, editor)), papierkorb: false);
+        AuswahlSetzen(Eintraege.OfType<ListenEintrag>().FirstOrDefault(e => ReferenceEquals(e.Editor, editor)), papierkorb: false);
     }
 
     [RelayCommand]
-    void StammdatenOeffnen()
+    Task StammdatenOeffnenAsync()
     {
-        AuswahlSetzen(null, papierkorb: false);
         _stammdatenSeite ??= StammdatenSeiteErzeugen();
-        AktuelleSeite = _stammdatenSeite;
+        return Dialoge.StammdatenAnzeigenAsync(_stammdatenSeite);
+    }
+
+    [RelayCommand]
+    Task AuswertungOeffnenAsync()
+    {
+        var rechnungen = _alleEintraege
+            .Where(e => e.Datei?.Rechnung is not null)
+            .Select(e => e.Datei!.Rechnung!);
+        return Dialoge.AuswertungAnzeigenAsync(new AuswertungViewModel(rechnungen));
     }
 
     StammdatenViewModel StammdatenSeiteErzeugen()
@@ -523,7 +617,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _stammdatenSeite = null;
         AktuelleSeite = null;
         ListeAktualisieren(null);
-        AusgewaehlterEintrag = Eintraege.FirstOrDefault(e => e.Datei is { HatFehler: false });
+        AusgewaehlterEintrag = Eintraege.OfType<ListenEintrag>().FirstOrDefault(e => e.Datei is { HatFehler: false });
         ExterneAenderung = false;
     }
 
@@ -657,7 +751,7 @@ public partial class MainWindowViewModel : ViewModelBase
             ListeAktualisieren(neuerPfad);
 
             // Wiederhergestellte Rechnung direkt (editierbar) öffnen
-            if (Eintraege.FirstOrDefault(e => e.Datei?.Pfad == neuerPfad) is { } eintrag)
+            if (Eintraege.OfType<ListenEintrag>().FirstOrDefault(e => e.Datei?.Pfad == neuerPfad) is { } eintrag)
             {
                 AuswahlSetzen(eintrag, papierkorb: false);
                 EintragOeffnen(eintrag, nurLesen: false);
@@ -719,7 +813,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public IReadOnlyCollection<string> NummernAusser(RechnungEditorViewModel? ausser)
     {
-        var dateiNummern = Eintraege.Concat(PapierkorbEintraege)
+        var dateiNummern = _alleEintraege.Concat(_allePapierkorb)
             .Where(e => e.Datei?.Rechnung is not null && e.Datei.Pfad != ausser?.Pfad)
             .Select(e => e.Datei!.Rechnung!.Nummer);
         var neueNummern = _neueEditoren
@@ -749,5 +843,7 @@ public partial class MainWindowViewModel : ViewModelBase
         public Task<SchliessenWahl> SchliessenAbfragenAsync(int anzahl) => Task.FromResult(SchliessenWahl.Abbrechen);
         public Task<FreigebenWahl> FreigebenAbfragenAsync(string nummer) => Task.FromResult(FreigebenWahl.Abbrechen);
         public Task EinstellungenAnzeigenAsync(EinstellungenViewModel einstellungen) => Task.CompletedTask;
+        public Task StammdatenAnzeigenAsync(StammdatenViewModel stammdaten) => Task.CompletedTask;
+        public Task AuswertungAnzeigenAsync(AuswertungViewModel auswertung) => Task.CompletedTask;
     }
 }

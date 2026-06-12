@@ -47,6 +47,6 @@ public partial class EinstellungenViewModel : ViewModelBase
         }
 
         _main.DatenOrdnerWechseln(ordner);
-        Status = $"Neu geladen – {_main.Eintraege.Count} Rechnung(en) in {_main.DatenOrdner} gefunden.";
+        Status = $"Neu geladen – {_main.AnzahlRechnungen} Rechnung(en) in {_main.DatenOrdner} gefunden.";
     }
 }

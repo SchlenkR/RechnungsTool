@@ -50,6 +50,21 @@
                         </StackPanel>
                     </Button>
                     <Button Classes="ghost" Padding="8"
+                            ToolTip.Tip="Auswertung"
+                            Command="{Binding AuswertungOeffnenCommand}">
+                        <ui:SymbolIcon Symbol="Calculator" FontSize="18"/>
+                    </Button>
+                    <Button Classes="ghost" Padding="8"
+                            ToolTip.Tip="Stammdaten"
+                            Command="{Binding StammdatenOeffnenCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <ui:SymbolIcon Symbol="People" FontSize="18"/>
+                            <TextBlock Text="●" FontSize="9" VerticalAlignment="Top"
+                                       Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                       IsVisible="{Binding StammdatenDirty}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="ghost" Padding="8"
                             ToolTip.Tip="Einstellungen"
                             Command="{Binding EinstellungenOeffnenCommand}">
                         <ui:SymbolIcon Symbol="Settings" FontSize="18"/>
@@ -100,7 +115,7 @@
             </ui:InfoBar.ActionButton>
         </ui:InfoBar>
 
-        <Grid ColumnDefinitions="290,*" Margin="12,0,12,8">
+        <Grid ColumnDefinitions="380,*" Margin="12,0,12,8">
 
             <!-- Sidebar: Rechnungsübersicht -->
             <Border Grid.Column="0" Classes="card" Padding="12">
@@ -114,29 +129,23 @@
                         </StackPanel>
                     </Button>
 
-                    <Button DockPanel.Dock="Bottom" Classes="secondary" HorizontalAlignment="Stretch"
-                            Margin="0,10,0,0"
-                            Command="{Binding StammdatenOeffnenCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <ui:SymbolIcon Symbol="People"/>
-                            <TextBlock Text="Stammdaten"/>
-                            <TextBlock Text="●" FontSize="10" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource AccentFillColorDefaultBrush}"
-                                       IsVisible="{Binding StammdatenDirty}"/>
-                        </StackPanel>
-                    </Button>
+                    <TextBox DockPanel.Dock="Top" Margin="0,10,0,0"
+                             Classes="clearButton"
+                             Watermark="Suchen…"
+                             Text="{Binding SuchText}"/>
 
-                    <TextBlock DockPanel.Dock="Top" Text="RECHNUNGEN" Classes="hint"
-                               Margin="4,14,0,6" FontWeight="SemiBold"/>
-
-                    <ScrollViewer>
+                    <ScrollViewer Margin="0,8,0,0">
                         <StackPanel>
                             <ListBox Classes="nav" Background="Transparent"
                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                      ItemsSource="{Binding Eintraege}"
                                      SelectedItem="{Binding AusgewaehlterEintrag}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ListenEintrag">
+                                <ListBox.DataTemplates>
+                                    <DataTemplate DataType="vm:JahresKopf">
+                                        <TextBlock Text="{Binding Text}" FontWeight="Bold" FontSize="16"
+                                                   Margin="0,6,0,2"/>
+                                    </DataTemplate>
+                                    <DataTemplate DataType="vm:ListenEintrag">
                                         <Grid ColumnDefinitions="*,Auto,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -150,9 +159,9 @@
                                                                IsVisible="{Binding Editor.IstDirty, FallbackValue=False}"/>
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding EmpfaengerZeile}" FontSize="11"
-                                                           Classes="hint" TextWrapping="Wrap"/>
-                                                <TextBlock Text="{Binding DatumZeile}" FontSize="11"
-                                                           Classes="hint"/>
+                                                           Classes="hint"
+                                                           TextWrapping="NoWrap"
+                                                           TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Text="{Binding ProblemText}" FontSize="11"
                                                            Foreground="IndianRed" TextWrapping="Wrap"
                                                            IsVisible="{Binding HatProblem}"/>
@@ -173,7 +182,7 @@
                                             </Button>
                                         </Grid>
                                     </DataTemplate>
-                                </ListBox.ItemTemplate>
+                                </ListBox.DataTemplates>
                             </ListBox>
 
                             <TextBlock Text="PAPIERKORB" Classes="hint"
@@ -190,9 +199,9 @@
                                             <TextBlock Text="{Binding Titel}" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                             <TextBlock Text="{Binding EmpfaengerZeile}" FontSize="11"
-                                                       Classes="hint" TextWrapping="Wrap"/>
-                                            <TextBlock Text="{Binding DatumZeile}" FontSize="11"
-                                                       Classes="hint"/>
+                                                       Classes="hint"
+                                                       TextWrapping="NoWrap"
+                                                       TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>

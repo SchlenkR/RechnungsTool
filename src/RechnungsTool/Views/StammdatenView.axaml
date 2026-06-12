@@ -8,13 +8,11 @@
              x:Class="RechnungsTool.Views.StammdatenView"
              x:DataType="vm:StammdatenViewModel">
 
+    <!-- Wird als Inhalt eines modalen ContentDialog angezeigt; Größe setzt Dialoge.cs -->
     <ScrollViewer>
-        <StackPanel Spacing="12" MaxWidth="680" HorizontalAlignment="Left">
+        <StackPanel Spacing="12">
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Stammdaten" FontSize="20" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding InfoText}" Classes="hint"/>
-            </StackPanel>
+            <TextBlock Text="{Binding InfoText}" Classes="hint"/>
 
             <Border Classes="card">
                 <StackPanel Spacing="8">

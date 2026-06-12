@@ -54,23 +54,31 @@ public class Dialoge : IDialoge
         };
     }
 
-    public async Task EinstellungenAnzeigenAsync(EinstellungenViewModel einstellungen)
+    public Task EinstellungenAnzeigenAsync(EinstellungenViewModel einstellungen) =>
+        GrossenDialogZeigenAsync("Einstellungen", new EinstellungenView { DataContext = einstellungen });
+
+    public Task StammdatenAnzeigenAsync(StammdatenViewModel stammdaten) =>
+        GrossenDialogZeigenAsync("Stammdaten", new StammdatenView { DataContext = stammdaten });
+
+    public Task AuswertungAnzeigenAsync(AuswertungViewModel auswertung) =>
+        GrossenDialogZeigenAsync("Auswertung", new AuswertungView { DataContext = auswertung });
+
+    /// <summary>Modaler Dialog, maximiert mit 120 px Abstand zu allen Fensterkanten.</summary>
+    static async Task GrossenDialogZeigenAsync(string titel, Avalonia.Controls.Control inhalt)
     {
-        // Maximiert mit 120 px Abstand zu allen Fensterkanten
         var fenster = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
         var breite = Math.Max(420, (fenster?.ClientSize.Width ?? 1200) - 240);
         var hoehe = Math.Max(320, (fenster?.ClientSize.Height ?? 800) - 240);
 
+        // Dialog-Innenabstände (Padding, Titel, Buttonzeile) ausgleichen
+        inhalt.MinWidth = breite - 48;
+        inhalt.MinHeight = hoehe - 150;
+        inhalt.MaxHeight = hoehe - 150;
+
         var dialog = new ContentDialog
         {
-            Title = "Einstellungen",
-            Content = new EinstellungenView
-            {
-                DataContext = einstellungen,
-                // Dialog-Innenabstände (Padding, Titel, Buttonzeile) ausgleichen
-                MinWidth = breite - 48,
-                MinHeight = hoehe - 150,
-            },
+            Title = titel,
+            Content = inhalt,
             CloseButtonText = "Schließen",
         };
         dialog.Resources["ContentDialogMaxWidth"] = breite;

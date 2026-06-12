@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RechnungsTool.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="900"
+             x:Class="RechnungsTool.Views.AuswertungView"
+             x:DataType="vm:AuswertungViewModel">
+
+    <!-- Wird als Inhalt eines modalen ContentDialog angezeigt; Größe setzt Dialoge.cs -->
+    <ScrollViewer>
+        <StackPanel Spacing="12">
+
+            <Border Classes="card">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="KENNZAHLEN" Classes="cardTitle"/>
+                    <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Gesamtumsatz" Classes="label"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding GesamtumsatzText}" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Umsatz laufendes Jahr" Classes="label" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LaufendesJahrText}" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Anzahl Rechnungen" Classes="label" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AnzahlText}" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Ø Rechnungsbetrag" Classes="label" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurchschnittText}" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Größte Rechnung" Classes="label" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding GroessteRechnungText}" Margin="0,6,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="UMSATZ PRO JAHR" Classes="cardTitle"/>
+                    <ItemsControl ItemsSource="{Binding UmsatzProJahr}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BalkenZeile">
+                                <Grid ColumnDefinitions="70,300,*" Margin="0,3">
+                                    <TextBlock Grid.Column="0" Text="{Binding Beschriftung}" FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Height="18" CornerRadius="4"
+                                            HorizontalAlignment="Left"
+                                            Width="{Binding Balken}" Background="#5B5FC7"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding BetragText}" Margin="10,0,0,0"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="KUMULIERTER UMSATZ ÜBER DIE ZEIT" Classes="cardTitle"/>
+                    <Border Background="#F4F5FB" CornerRadius="6" Padding="10"
+                            IsVisible="{Binding VerlaufVorhanden}">
+                        <StackPanel Spacing="6">
+                            <Canvas Width="640" Height="160" HorizontalAlignment="Left">
+                                <Line StartPoint="0,155" EndPoint="640,155" Stroke="#C5CCEA" StrokeThickness="1"/>
+                                <Polyline Points="{Binding KumulierterVerlauf}"
+                                          Stroke="#0E8174" StrokeThickness="3"
+                                          StrokeJoin="Round" StrokeLineCap="Round"/>
+                            </Canvas>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding VerlaufVonText}" Classes="hint"/>
+                                <TextBlock Grid.Column="1" Text="{Binding VerlaufBisText}" Classes="hint"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="Noch zu wenige Rechnungen für einen Verlauf."
+                               Classes="hint" IsVisible="{Binding !VerlaufVorhanden}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="TOP-KUNDEN NACH UMSATZ" Classes="cardTitle"/>
+                    <ItemsControl ItemsSource="{Binding TopKunden}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BalkenZeile">
+                                <Grid ColumnDefinitions="220,300,*" Margin="0,3">
+                                    <TextBlock Grid.Column="0" Text="{Binding Beschriftung}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Height="18" CornerRadius="4"
+                                            HorizontalAlignment="Left"
+                                            Width="{Binding Balken}" Background="#0E8174"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding BetragText}" Margin="10,0,0,0"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

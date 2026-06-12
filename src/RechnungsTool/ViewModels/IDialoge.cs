@@ -34,4 +34,6 @@ public interface IDialoge
     Task<SchliessenWahl> SchliessenAbfragenAsync(int anzahlUngespeichert);
     Task<FreigebenWahl> FreigebenAbfragenAsync(string nummer);
     Task EinstellungenAnzeigenAsync(EinstellungenViewModel einstellungen);
+    Task StammdatenAnzeigenAsync(StammdatenViewModel stammdaten);
+    Task AuswertungAnzeigenAsync(AuswertungViewModel auswertung);
 }
