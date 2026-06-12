@@ -43,7 +43,7 @@ Die Datei wird beim ersten Start automatisch angelegt; `~` wird expandiert, Netz
 
 ## PDF-Erzeugung
 
-Das Layout liegt in [src/RechnungsTool/Assets/RechnungTemplate.html](src/RechnungsTool/Assets/RechnungTemplate.html) (One-Pager, DIN A4, alle Styles inline — ohne Rebuild anpassbar, die Datei liegt auch im App-Ordner). Gerendert wird mit **PuppeteerSharp** (MIT-Lizenz): Beim ersten Export/der ersten Vorschau wird einmalig ein Headless-Chromium (~170 MB) nach `~/Library/Application Support/RechnungsTool/chromium` geladen — danach läuft alles offline.
+Das Layout liegt in [src/RechnungsTool/Assets/RechnungTemplate.html](src/RechnungsTool/Assets/RechnungTemplate.html) (One-Pager, DIN A4, alle Styles inline) und ist in die App **eingebettet**. Zum Anpassen ohne Rebuild eine Kopie nach `~/Library/Application Support/RechnungsTool/RechnungTemplate.html` legen — die hat Vorrang. Gerendert wird mit **PuppeteerSharp** (MIT-Lizenz): Beim ersten Export/der ersten Vorschau wird einmalig ein Headless-Chromium (~170 MB) nach `~/Library/Application Support/RechnungsTool/chromium` geladen — danach läuft alles offline.
 
 Pflichtangaben nach § 14 Abs. 4 UStG sind im Template abgedeckt: Name/Anschrift beider Parteien, Steuernummer bzw. USt-IdNr., Ausstellungsdatum, fortlaufende Rechnungsnummer, Menge/Art der Leistung, Leistungszeitraum, Entgelt sowie der Hinweis auf § 19 UStG (keine E-Rechnung nötig, PDF genügt für Kleinunternehmer an inländische Empfänger).
 
@@ -58,5 +58,15 @@ build/publish-macos.sh osx-x64                  # … für Intel
 ```
 
 In VSCode: „Tasks: Run Task“ → **publish-macos** (ruft dasselbe Skript auf).
+
+## Release
+
+Tag pushen → GitHub Action baut arm64- und Intel-Bundles und veröffentlicht sie als GitHub-Release:
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+Installation auf einem anderen Mac: Zip aus dem Release laden, `RechnungsTool.app` nach Programme ziehen und einmalig `xattr -cr /Applications/RechnungsTool.app` ausführen (die App ist ad-hoc-signiert, nicht notarisiert — sonst blockt Gatekeeper).
 
 Output: `dist/<rid>/RechnungsTool.app` (ad-hoc signiert, per `open` startbar).

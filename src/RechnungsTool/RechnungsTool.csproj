@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
-    <None Include="Assets\RechnungTemplate.html" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Assets\RechnungTemplate.html" />
   </ItemGroup>
 
   <ItemGroup>

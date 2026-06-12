@@ -97,8 +97,15 @@ public static class RechnungsHtml
 
     static string TemplateLaden()
     {
-        var pfad = Path.Combine(AppContext.BaseDirectory, "Assets", "RechnungTemplate.html");
-        return File.ReadAllText(pfad, Encoding.UTF8);
+        // Eigenes Template im App-Datenordner überschreibt das eingebettete
+        var anpassung = Path.Combine(AppConfig.AppDatenOrdner, "RechnungTemplate.html");
+        if (File.Exists(anpassung))
+            return File.ReadAllText(anpassung, Encoding.UTF8);
+
+        using var stream = typeof(RechnungsHtml).Assembly
+            .GetManifestResourceStream("RechnungsTool.Assets.RechnungTemplate.html")!;
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        return reader.ReadToEnd();
     }
 
     static string Euro(decimal betrag) => H(betrag.ToString("N2", DeDe) + " €");
