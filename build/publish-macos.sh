@@ -2,26 +2,28 @@
 # Publishes RechnungsTool as a self-contained macOS app bundle.
 #
 # Usage:
-#   build/publish-macos.sh            # Apple Silicon (osx-arm64)
-#   build/publish-macos.sh osx-x64    # Intel Macs
+#   build/publish-macos.sh                     # Apple Silicon (osx-arm64), Version 0.0.0
+#   build/publish-macos.sh osx-x64 1.2.3       # Intel Macs, Version 1.2.3
 #
 # Output: dist/<rid>/RechnungsTool.app  (plus raw publish folder)
 
 set -euo pipefail
 
 RID="${1:-osx-arm64}"
+VERSION="${2:-0.0.0}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT="$ROOT/src/RechnungsTool/RechnungsTool.csproj"
 OUT="$ROOT/dist/$RID"
 PUBLISH="$OUT/publish"
 APP="$OUT/RechnungsTool.app"
 
-echo "==> dotnet publish ($RID, self-contained)"
+echo "==> dotnet publish ($RID, self-contained, Version $VERSION)"
 rm -rf "$OUT"
 dotnet publish "$PROJECT" \
     -c Release \
     -r "$RID" \
     --self-contained true \
+    -p:Version="$VERSION" \
     -p:PublishSingleFile=true \
     -p:IncludeNativeLibrariesForSelfExtract=true \
     -p:PublishReadyToRun=true \
@@ -33,7 +35,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp -R "$PUBLISH/." "$APP/Contents/MacOS/"
 cp "$ROOT/build/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -45,9 +47,9 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleIdentifier</key>
     <string>de.pure-state.rechnungstool</string>
     <key>CFBundleVersion</key>
-    <string>1.0.0</string>
+    <string>${VERSION}</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>${VERSION}</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>

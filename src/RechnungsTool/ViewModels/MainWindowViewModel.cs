@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RechnungsTool.Models;
@@ -144,6 +145,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty] private bool stammdatenDirty;
 
+    // Over-the-air-Update
+    readonly UpdateDienst _updates = new();
+    UpdateInfo? _update;
+    [ObservableProperty] private bool updateVerfuegbar;
+    [ObservableProperty] private string updateText = "";
+
     public ObservableCollection<ListenEintrag> Eintraege { get; } = new();
     public ObservableCollection<ListenEintrag> PapierkorbEintraege { get; } = new();
 
@@ -175,6 +182,54 @@ public partial class MainWindowViewModel : ViewModelBase
             StammdatenOeffnen();
         else
             AusgewaehlterEintrag = Eintraege.FirstOrDefault(e => e.Datei is { HatFehler: false });
+
+        _ = UpdatePruefenAsync();
+    }
+
+    // --- Over-the-air-Update ------------------------------------------------
+
+    async Task UpdatePruefenAsync()
+    {
+        // Nur sinnvoll, wenn die App als installiertes Bundle läuft (nicht bei dotnet run)
+        if (UpdateDienst.BundlePfad() is null)
+            return;
+
+        try
+        {
+            _update = await _updates.PruefenAsync();
+            if (_update is not null)
+            {
+                UpdateText = $"Version {_update.Tag} ist verfügbar (installiert: v{UpdateDienst.AktuelleVersion}).";
+                UpdateVerfuegbar = true;
+            }
+        }
+        catch
+        {
+            // offline oder Rate-Limit – beim nächsten Start erneut versuchen
+        }
+    }
+
+    [RelayCommand]
+    async Task UpdateInstallierenAsync()
+    {
+        if (_update is null)
+            return;
+        if (!await DarfBeendenAsync())
+            return;
+
+        try
+        {
+            UpdateText = $"Update {_update.Tag} wird heruntergeladen…";
+            var zip = await _updates.HerunterladenAsync(_update);
+            _updates.InstallierenNachBeenden(zip);
+            (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)
+                ?.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            BeendenBestaetigt = false;
+            UpdateText = $"Update fehlgeschlagen: {ex.Message}";
+        }
     }
 
     // --- Übersicht --------------------------------------------------------

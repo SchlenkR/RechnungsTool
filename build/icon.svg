@@ -52,10 +52,13 @@
           font-size="160" font-weight="800" fill="#FFFFFF">€</text>
   </g>
 
-  <!-- Sparkles -->
-  <g fill="#FFFFFF">
-    <path d="M 760 218 l 14 38 l 38 14 l -38 14 l -14 38 l -14 -38 l -38 -14 l 38 -14 z" opacity="0.95"/>
-    <path d="M 836 330 l 9 24 l 24 9 l -24 9 l -9 24 l -9 -24 l -24 -9 l 24 -9 z" opacity="0.8"/>
-    <path d="M 252 736 l 11 30 l 30 11 l -30 11 l -11 30 l -11 -30 l -30 -11 l 30 -11 z" opacity="0.85"/>
+  <!-- Notenschlüssel -->
+  <g fill="#FFFFFF" font-family="'Apple Symbols', 'Noto Music', serif">
+    <text x="788" y="312" font-size="170" text-anchor="middle"
+          transform="rotate(12 788 312)" opacity="0.95">𝄞</text>
+    <text x="852" y="450" font-size="100" text-anchor="middle"
+          transform="rotate(-8 852 450)" opacity="0.75">𝄞</text>
+    <text x="256" y="826" font-size="130" text-anchor="middle"
+          transform="rotate(-12 256 826)" opacity="0.85">𝄞</text>
   </g>
 </svg>

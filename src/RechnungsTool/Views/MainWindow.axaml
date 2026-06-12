@@ -72,6 +72,20 @@
                     Message="{Binding OrdnerWarnung}"
                     IsOpen="{Binding OrdnerWarnung, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
+        <!-- Update-Banner (Over-the-air) -->
+        <ui:InfoBar DockPanel.Dock="Top"
+                    Margin="20,0,20,8"
+                    Severity="Success"
+                    IsClosable="True"
+                    Title="Update"
+                    Message="{Binding UpdateText}"
+                    IsOpen="{Binding UpdateVerfuegbar, Mode=TwoWay}">
+            <ui:InfoBar.ActionButton>
+                <Button Classes="accent" Content="Jetzt aktualisieren"
+                        Command="{Binding UpdateInstallierenCommand}"/>
+            </ui:InfoBar.ActionButton>
+        </ui:InfoBar>
+
         <Grid ColumnDefinitions="290,*" Margin="12,0,12,8">
 
             <!-- Sidebar: Rechnungsübersicht -->
