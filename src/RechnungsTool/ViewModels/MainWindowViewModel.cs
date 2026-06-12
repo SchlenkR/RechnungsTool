@@ -496,6 +496,28 @@ public partial class MainWindowViewModel : ViewModelBase
         return Dialoge.EinstellungenAnzeigenAsync(_einstellungenSeite);
     }
 
+    /// <summary>Lädt die komplette Anwendung neu (verwirft offene Editoren nach Rückfrage).</summary>
+    [RelayCommand]
+    async Task VollNeuLadenAsync()
+    {
+        if (HatUngespeicherte)
+        {
+            var ok = await Dialoge.BestaetigenAsync(
+                "Anwendung neu laden",
+                "Alle Daten werden neu vom Datenträger gelesen.\n\nUngespeicherte Änderungen gehen dabei verloren.",
+                "Neu laden");
+            if (!ok)
+                return;
+        }
+
+        _neueEditoren.Clear();
+        _offeneEditoren.Clear();
+        _stammdatenSeite = null;
+        AktuelleSeite = null;
+        ListeAktualisieren(null);
+        AusgewaehlterEintrag = Eintraege.FirstOrDefault(e => e.Datei is { HatFehler: false });
+    }
+
     // --- Speichern / Dirty-Tracking ----------------------------------------
 
     IEnumerable<RechnungEditorViewModel> OffeneEditoren =>

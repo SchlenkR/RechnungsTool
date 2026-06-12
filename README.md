@@ -47,6 +47,42 @@ Das Layout liegt in [src/RechnungsTool/Assets/RechnungTemplate.html](src/Rechnun
 
 Pflichtangaben nach § 14 Abs. 4 UStG sind im Template abgedeckt: Name/Anschrift beider Parteien, Steuernummer bzw. USt-IdNr., Ausstellungsdatum, fortlaufende Rechnungsnummer, Menge/Art der Leistung, Leistungszeitraum, Entgelt sowie der Hinweis auf § 19 UStG (keine E-Rechnung nötig, PDF genügt für Kleinunternehmer an inländische Empfänger).
 
+## CLI
+
+Dasselbe Binary ist auch ein vollwertiges Kommandozeilen-Tool (für Automatisierung und KI-Bedienung): ohne Argumente startet die GUI, mit Argumenten der CLI-Modus. Praktisch als Alias:
+
+```bash
+alias rechnungstool="/Applications/RechnungsTool.app/Contents/MacOS/RechnungsTool"
+```
+
+Alle Befehle sind selbstdokumentierend (`--help` auf jeder Ebene, Spectre.Console.Cli):
+
+```bash
+rechnungstool --help                  # Übersicht aller Befehle
+rechnungstool list                    # Tabelle aller Rechnungen (inkl. Papierkorb)
+rechnungstool list --json             # … als JSON für Maschinen
+rechnungstool show 2026-19 [--json]   # Rechnung anzeigen
+
+# Neue Rechnung (Nummer wird fortlaufend vergeben, --nummer überschreibt)
+rechnungstool new \
+  --empfaenger "Acme GmbH" --strasse "Hafenweg 2" --plz 20457 --ort Hamburg \
+  --leistungszeitraum "Mai 2026" \
+  --position "Beratung|8|Std.|95" --position "Fahrtkosten|1|pauschal|120"
+
+rechnungstool edit 2026-19 --leistungszeitraum "Juni 2026" --hinweis "Danke!"
+rechnungstool validate 2026-19        # Befunde anzeigen; Exit-Code 1 bei Fehlern
+rechnungstool pdf 2026-19             # PDF erstellen (nur wenn valide) + Rechnung sperren
+rechnungstool pdf 2026-19 --korrektur # …_Korrektur.pdf neben vorhandenem PDF
+rechnungstool unlock 2026-19          # gesperrte Rechnung wieder freigeben
+rechnungstool trash 2026-19           # in den Papierkorb
+rechnungstool restore 2026-19         # aus dem Papierkorb zurück
+
+rechnungstool stammdaten show [--json]
+rechnungstool stammdaten set --iban "DE12 3456 …" --zahlungsziel 30
+```
+
+Positionen haben das Format `"Text|Menge|Einheit|Einzelpreis"` (Komma oder Punkt als Dezimaltrenner). `--daten-ordner <PFAD>` überschreibt bei jedem Befehl den Datenordner aus der Config. Gesperrte Rechnungen verweigern `edit` (erst `unlock`), `pdf` verweigert bei Validierungsfehlern — dieselbe Geschäftslogik wie in der GUI.
+
 ## Entwicklung & Build
 
 ```bash

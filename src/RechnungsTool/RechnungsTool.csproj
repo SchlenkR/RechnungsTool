@@ -25,6 +25,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="FluentAvaloniaUI" Version="2.5.1" />
     <PackageReference Include="PuppeteerSharp" Version="25.1.0" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.55.0" />
     <!-- Transitive Avalonia dependency, pinned to fix GHSA-xrw6-gwf8-vvr9 (NU1903) -->
     <PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />
   </ItemGroup>

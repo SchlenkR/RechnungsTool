@@ -3,6 +3,7 @@
              x:Class="RechnungsTool.App"
              xmlns:local="using:RechnungsTool"
              xmlns:sty="using:FluentAvalonia.Styling"
+             Name="RechnungsTool"
              RequestedThemeVariant="Light">
 
     <Application.DataTemplates>

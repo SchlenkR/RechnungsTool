@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
@@ -28,6 +29,20 @@ public partial class App : Application
             {
                 DataContext = viewModel,
             };
+
+            // Menüleisten-Eintrag (macOS): Anwendung neu laden mit Cmd+R
+            NativeMenu.SetMenu(this, new NativeMenu
+            {
+                Items =
+                {
+                    new NativeMenuItem("Neu laden")
+                    {
+                        Command = viewModel.VollNeuLadenCommand,
+                        Gesture = new Avalonia.Input.KeyGesture(
+                            Avalonia.Input.Key.R, Avalonia.Input.KeyModifiers.Meta),
+                    },
+                },
+            });
             desktop.ShutdownRequested += (_, e) =>
             {
                 // Cmd+Q bei ungespeicherten Änderungen abfangen und nachfragen
