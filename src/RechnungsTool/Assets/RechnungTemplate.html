@@ -4,21 +4,30 @@
 <meta charset="utf-8">
 <title>Rechnung {{NUMMER}}</title>
 <style>
-  /* DIN-A4-One-Pager; Seitenränder über body-padding, @page ohne Rand */
-  @page { size: A4; margin: 0; }
+  /* DIN-A4-Rechnung, mehrseitenfähig.
+     Druckränder und die je Seite wiederholte Fußzeile (Seite x von y) setzt der
+     PDF-Export über Chromium; die .fuss unten ist nur für die Bildschirm-Vorschau. */
+  @page { size: A4; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html, body { width: 210mm; }
   body {
-    position: relative;
-    min-height: 296mm;
-    padding: 16mm 20mm 42mm 25mm; /* DIN 5008: links 25mm, rechts 20mm */
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 10pt;
     line-height: 1.45;
     color: #1a1a1a;
     background: #ffffff;
   }
+
+  /* Vorschau-Modus: eine A4-Seite mit Rändern und Fußzeile im Dokument */
+  body.vorschau {
+    width: 210mm;
+    position: relative;
+    min-height: 296mm;
+    padding: 16mm 20mm 42mm 25mm; /* DIN 5008: links 25mm, rechts 20mm */
+  }
+
+  /* Druck-Modus: Ränder und die je Seite wiederholte Fußzeile setzt der PDF-Export */
+  body.druck .fuss { display: none; }
 
   .kopf {
     display: flex;
@@ -77,6 +86,8 @@
     border-collapse: collapse;
     font-size: 9.5pt;
   }
+  table.positionen thead { display: table-header-group; }
+  table.positionen tr { break-inside: avoid; page-break-inside: avoid; }
   table.positionen th {
     text-align: left;
     font-weight: 600;
@@ -89,12 +100,17 @@
     vertical-align: top;
   }
   table.positionen .num { text-align: right; white-space: nowrap; }
-  table.positionen tfoot td {
-    border-bottom: none;
+
+  .summe {
+    display: flex;
+    justify-content: space-between;
     border-top: 0.4mm solid #1a1a1a;
+    margin-top: 1mm;
+    padding: 2.5mm 2mm 0 2mm;
     font-weight: 600;
     font-size: 10.5pt;
-    padding-top: 2.5mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .ust-hinweis {
@@ -103,8 +119,9 @@
   }
   .zahlung { margin-top: 4mm; }
   .freitext { margin-top: 4mm; white-space: pre-wrap; }
-  .gruss { margin-top: 8mm; }
+  .gruss { margin-top: 8mm; break-inside: avoid; page-break-inside: avoid; }
 
+  /* Fußzeile nur für die Bildschirm-Vorschau (im PDF je Seite über den Export) */
   .fuss {
     position: absolute;
     left: 25mm;
@@ -121,7 +138,7 @@
   .fuss .block { max-width: 33%; }
 </style>
 </head>
-<body>
+<body class="{{MODUS}}">
 
   <header class="kopf">
     <div class="firma">
@@ -166,13 +183,12 @@
     <tbody>
       {{POSITIONEN}}
     </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="5">Rechnungsbetrag</td>
-        <td class="num">{{SUMME}}</td>
-      </tr>
-    </tfoot>
   </table>
+
+  <div class="summe">
+    <span>Rechnungsbetrag</span>
+    <span>{{SUMME}}</span>
+  </div>
 
   <p class="ust-hinweis">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).</p>
 

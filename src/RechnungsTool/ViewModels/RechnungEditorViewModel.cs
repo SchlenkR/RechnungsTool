@@ -357,8 +357,9 @@ public partial class RechnungEditorViewModel : ViewModelBase
 
             Directory.CreateDirectory(Path.GetDirectoryName(pdfPfad)!);
             Status = "PDF wird erstellt…";
-            var html = RechnungsHtml.Erzeugen(modell, _main.Stammdaten);
-            await _main.Pdf.PdfSpeichernAsync(html, pdfPfad);
+            var html = RechnungsHtml.Erzeugen(modell, _main.Stammdaten, fuerDruck: true);
+            await _main.Pdf.PdfSpeichernAsync(html, pdfPfad,
+                RechnungsHtml.PdfFusszeile(modell, _main.Stammdaten));
 
             // Die Rechnung gilt jetzt als verschickt → sperren und Sperre persistieren
             if (!Gesperrt)

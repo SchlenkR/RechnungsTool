@@ -79,7 +79,8 @@ public class PdfDienst
         }
     }
 
-    public async Task PdfSpeichernAsync(string html, string pdfPfad)
+    /// <param name="fusszeile">Auf jeder Seite wiederholte Fußzeile (Chromium-Template).</param>
+    public async Task PdfSpeichernAsync(string html, string pdfPfad, string fusszeile)
     {
         await _schleuse.WaitAsync();
         try
@@ -89,11 +90,23 @@ public class PdfDienst
             try
             {
                 await page.SetContentAsync(html);
+                // Print-CSS aktivieren (blendet u. a. die Bildschirm-Fußzeile aus)
+                await page.EmulateMediaTypeAsync(PuppeteerSharp.Media.MediaType.Print);
                 await page.PdfAsync(pdfPfad, new PdfOptions
                 {
                     Format = PuppeteerSharp.Media.PaperFormat.A4,
                     PrintBackground = true,
-                    PreferCSSPageSize = true,
+                    DisplayHeaderFooter = true,
+                    HeaderTemplate = "<span></span>",
+                    FooterTemplate = fusszeile,
+                    // DIN-5008-Ränder; unten Platz für die Fußzeile
+                    MarginOptions = new PuppeteerSharp.Media.MarginOptions
+                    {
+                        Top = "16mm",
+                        Bottom = "34mm",
+                        Left = "25mm",
+                        Right = "20mm",
+                    },
                 });
             }
             finally

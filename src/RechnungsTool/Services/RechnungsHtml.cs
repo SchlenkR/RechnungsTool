@@ -13,9 +13,10 @@ public static class RechnungsHtml
 {
     static readonly CultureInfo DeDe = CultureInfo.GetCultureInfo("de-DE");
 
-    public static string Erzeugen(Rechnung r, Stammdaten s)
+    /// <param name="fuerDruck">true: PDF-Export (Ränder/Fußzeile kommen von Chromium); false: Vorschau.</param>
+    public static string Erzeugen(Rechnung r, Stammdaten s, bool fuerDruck = false)
     {
-        var template = TemplateLaden();
+        var template = TemplateLaden().Replace("{{MODUS}}", fuerDruck ? "druck" : "vorschau");
         var f = s.Firma;
 
         var positionen = new StringBuilder();
@@ -46,26 +47,8 @@ public static class RechnungsHtml
             .Where(z => !string.IsNullOrWhiteSpace(z))
             .Select(z => $"<div>{H(z)}</div>");
 
-        var fussKontakt = string.Join("<br>",
-            new[]
-                {
-                    string.IsNullOrWhiteSpace(f.Telefon) ? null : $"Tel. {f.Telefon}",
-                    string.IsNullOrWhiteSpace(f.Email) ? null : f.Email,
-                    !string.IsNullOrWhiteSpace(f.UstIdNr) ? $"USt-IdNr. {f.UstIdNr}" : $"Steuernummer {f.Steuernummer}",
-                }
-                .Where(z => !string.IsNullOrWhiteSpace(z))
-                .Select(z => H(z!)));
-
-        var fussBank = string.Join("<br>",
-            new[]
-                {
-                    string.IsNullOrWhiteSpace(s.Bank.Kontoinhaber) ? null : s.Bank.Kontoinhaber,
-                    string.IsNullOrWhiteSpace(s.Bank.Iban) ? null : $"IBAN {s.Bank.Iban}",
-                    string.IsNullOrWhiteSpace(s.Bank.Bic) ? null : $"BIC {s.Bank.Bic}",
-                    s.Bank.Name,
-                }
-                .Where(z => !string.IsNullOrWhiteSpace(z))
-                .Select(z => H(z!)));
+        var fussKontakt = FussKontakt(f);
+        var fussBank = FussBank(s.Bank);
 
         var hinweisBlock = string.IsNullOrWhiteSpace(r.Hinweis)
             ? ""
@@ -94,6 +77,50 @@ public static class RechnungsHtml
             .Replace("{{FUSS_KONTAKT}}", fussKontakt)
             .Replace("{{FUSS_BANK}}", fussBank);
     }
+
+    /// <summary>
+    /// Fußzeile für den PDF-Export, die Chromium auf jeder Seite wiederholt –
+    /// inkl. Rechnungsnummer und „Seite x von y“ (pageNumber/totalPages füllt Chromium).
+    /// Nur Inline-Styles, externe Ressourcen stehen hier nicht zur Verfügung.
+    /// </summary>
+    public static string PdfFusszeile(Rechnung r, Stammdaten s)
+    {
+        var f = s.Firma;
+        return $"""
+            <div style="width:100%; box-sizing:border-box; padding:0 20mm 0 25mm;
+                        font-size:7px; font-family:Helvetica,Arial,sans-serif; color:#666666;">
+              <div style="border-top:0.5px solid #bbbbbb; padding-top:5px;
+                          display:flex; justify-content:space-between; gap:16px;">
+                <div><b>{H(f.Name)}</b><br>{H(f.Strasse)}<br>{H($"{f.Plz} {f.Ort}".Trim())}</div>
+                <div>{FussKontakt(f)}</div>
+                <div>{FussBank(s.Bank)}</div>
+                <div style="text-align:right;">Rechnung {H(r.Nummer)}<br>
+                  Seite <span class="pageNumber"></span> von <span class="totalPages"></span></div>
+              </div>
+            </div>
+            """;
+    }
+
+    static string FussKontakt(Firma f) => string.Join("<br>",
+        new[]
+            {
+                string.IsNullOrWhiteSpace(f.Telefon) ? null : $"Tel. {f.Telefon}",
+                string.IsNullOrWhiteSpace(f.Email) ? null : f.Email,
+                !string.IsNullOrWhiteSpace(f.UstIdNr) ? $"USt-IdNr. {f.UstIdNr}" : $"Steuernummer {f.Steuernummer}",
+            }
+            .Where(z => !string.IsNullOrWhiteSpace(z))
+            .Select(z => H(z!)));
+
+    static string FussBank(Bank bank) => string.Join("<br>",
+        new[]
+            {
+                string.IsNullOrWhiteSpace(bank.Kontoinhaber) ? null : bank.Kontoinhaber,
+                string.IsNullOrWhiteSpace(bank.Iban) ? null : $"IBAN {bank.Iban}",
+                string.IsNullOrWhiteSpace(bank.Bic) ? null : $"BIC {bank.Bic}",
+                bank.Name,
+            }
+            .Where(z => !string.IsNullOrWhiteSpace(z))
+            .Select(z => H(z!)));
 
     static string TemplateLaden()
     {

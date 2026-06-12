@@ -449,7 +449,10 @@ public class PdfBefehl : AsyncCommand<PdfSettings>
         try
         {
             AnsiConsole.MarkupLine("PDF wird erstellt…");
-            await pdf.PdfSpeichernAsync(RechnungsHtml.Erzeugen(r, bestand.Stammdaten), pdfPfad);
+            await pdf.PdfSpeichernAsync(
+                RechnungsHtml.Erzeugen(r, bestand.Stammdaten, fuerDruck: true),
+                pdfPfad,
+                RechnungsHtml.PdfFusszeile(r, bestand.Stammdaten));
         }
         finally
         {
