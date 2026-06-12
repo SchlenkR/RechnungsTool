@@ -1,7 +1,15 @@
 name: Release
 
 # Release bauen: Tag im Format v* pushen (z. B. v1.0.0).
-# Manueller Lauf (workflow_dispatch) baut nur und lädt die Zips als Artefakte hoch.
+# Mit konfigurierten Developer-ID-Secrets entstehen signierte, notarisierte DMGs
+# (Download im Browser, in Programme ziehen, fertig). Ohne Secrets: ad-hoc-Zips.
+#
+# Benötigte Secrets für Signierung/Notarisierung:
+#   MACOS_CERTIFICATE           base64-kodiertes "Developer ID Application"-Zertifikat (.p12)
+#   MACOS_CERTIFICATE_PASSWORD  Passwort des .p12-Exports
+#   APPLE_ID                    Apple-ID (E-Mail)
+#   APPLE_APP_PASSWORD          App-spezifisches Passwort (account.apple.com)
+#   APPLE_TEAM_ID               Team-ID (developer.apple.com → Membership)
 on:
   push:
     tags: ['v*']
@@ -9,6 +17,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  SIGNING_ENABLED: ${{ secrets.MACOS_CERTIFICATE != '' }}
 
 jobs:
   release:
@@ -26,10 +37,85 @@ jobs:
       - name: Publish (Intel)
         run: build/publish-macos.sh osx-x64
 
-      - name: Zip app bundles
+      - name: Import Developer ID certificate
+        if: env.SIGNING_ENABLED == 'true'
+        env:
+          CERT_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$CERT_BASE64" | base64 -d > /tmp/cert.p12
+          security create-keychain -p ci build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci build.keychain
+          security set-keychain-settings -lut 7200 build.keychain
+          security import /tmp/cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain >/dev/null
+          rm /tmp/cert.p12
+
+      - name: Sign, build DMGs and notarize
+        if: env.SIGNING_ENABLED == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          IDENTITY="$(security find-identity -v -p codesigning build.keychain | awk -F'"' '/Developer ID Application/ {print $2; exit}')"
+          echo "Signiere mit: $IDENTITY"
+          for RID in osx-arm64 osx-x64; do
+            ARCH="${RID#osx-}"
+            APP="dist/$RID/RechnungsTool.app"
+            DMG="dist/RechnungsTool-${{ github.ref_name }}-macos-${ARCH}.dmg"
+
+            # App mit Hardened Runtime signieren (Pflicht für Notarisierung)
+            codesign --force --options runtime --timestamp \
+              --entitlements build/entitlements.plist \
+              --sign "$IDENTITY" "$APP"
+
+            # DMG mit Programme-Verknüpfung bauen
+            STAGE="$(mktemp -d)"
+            cp -R "$APP" "$STAGE/"
+            ln -s /Applications "$STAGE/Programme  (hierher ziehen)"
+            hdiutil create -volname "RechnungsTool" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+            rm -rf "$STAGE"
+
+            codesign --force --timestamp --sign "$IDENTITY" "$DMG"
+            xcrun notarytool submit "$DMG" \
+              --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" --wait
+            xcrun stapler staple "$DMG"
+          done
+
+      - name: Zip app bundles (unsigned fallback)
+        if: env.SIGNING_ENABLED != 'true'
         run: |
           ditto -c -k --sequesterRsrc --keepParent dist/osx-arm64/RechnungsTool.app "dist/RechnungsTool-${{ github.ref_name }}-macos-arm64.zip"
           ditto -c -k --sequesterRsrc --keepParent dist/osx-x64/RechnungsTool.app   "dist/RechnungsTool-${{ github.ref_name }}-macos-x64.zip"
+
+      - name: Write release notes
+        run: |
+          if [ "$SIGNING_ENABLED" = "true" ]; then
+            {
+              echo "## Installation (macOS)"
+              echo
+              echo "DMG laden (**arm64** für Apple Silicon, **x64** für Intel), öffnen und"
+              echo "**RechnungsTool** in den Programme-Ordner ziehen – fertig."
+              echo
+              echo "Die App ist mit Developer ID signiert und von Apple notarisiert."
+            } > /tmp/notes.md
+          else
+            {
+              echo "## Installation (macOS)"
+              echo
+              echo "Empfohlen – per Terminal, dann gibt es keine Gatekeeper-Quarantäne:"
+              echo
+              echo '```'
+              echo "gh release download -R SchlenkR/RechnungsTool -p '*arm64.zip' -D /tmp/rt && ditto -x -k /tmp/rt/*.zip /Applications && rm -rf /tmp/rt"
+              echo '```'
+              echo
+              echo "(Intel-Mac: \`x64\` statt \`arm64\`.) Alternativ per Browser laden, nach"
+              echo "**Programme** ziehen und einmalig \`xattr -cr /Applications/RechnungsTool.app\` ausführen."
+            } > /tmp/notes.md
+          fi
 
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/')
@@ -37,25 +123,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ github.ref_name }}" \
-            dist/RechnungsTool-*.zip \
+            dist/RechnungsTool-${{ github.ref_name }}-* \
             --title "RechnungsTool ${{ github.ref_name }}" \
-            --generate-notes \
-            --notes "$(cat <<'EOF'
-          ## Installation (macOS)
-
-          1. Passende Zip laden: **arm64** für Apple Silicon (M1–M4), **x64** für Intel
-          2. Entpacken und `RechnungsTool.app` nach **Programme** ziehen
-          3. Einmalig die Gatekeeper-Quarantäne entfernen (App ist nicht notarisiert):
-
-             ```
-             xattr -cr /Applications/RechnungsTool.app
-             ```
-          EOF
-          )"
+            --notes-file /tmp/notes.md
 
       - name: Upload artifacts (manual run)
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
           name: RechnungsTool-macos
-          path: dist/RechnungsTool-*.zip
+          path: dist/RechnungsTool-*

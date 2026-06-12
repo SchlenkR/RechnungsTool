@@ -67,6 +67,6 @@ Tag pushen → GitHub Action baut arm64- und Intel-Bundles und veröffentlicht s
 git tag v1.0.0 && git push origin v1.0.0
 ```
 
-Installation auf einem anderen Mac: Zip aus dem Release laden, `RechnungsTool.app` nach Programme ziehen und einmalig `xattr -cr /Applications/RechnungsTool.app` ausführen (die App ist ad-hoc-signiert, nicht notarisiert — sonst blockt Gatekeeper).
+**Mit Developer-ID-Secrets** (siehe Kommentar in [release.yml](.github/workflows/release.yml)) baut die Action **signierte, notarisierte DMGs**: laden, öffnen, App nach Programme ziehen — fertig, ganz ohne Terminal. Ohne Secrets entstehen ad-hoc-signierte Zips; dann installiert [build/install.sh](build/install.sh) quarantänefrei per CLI, oder nach Browser-Download einmalig `xattr -cr /Applications/RechnungsTool.app` ausführen.
 
 Output: `dist/<rid>/RechnungsTool.app` (ad-hoc signiert, per `open` startbar).
