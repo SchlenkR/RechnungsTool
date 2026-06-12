@@ -8,9 +8,8 @@
              x:Class="RechnungsTool.Views.StammdatenView"
              x:DataType="vm:StammdatenViewModel">
 
-    <!-- Wird als Inhalt eines modalen ContentDialog angezeigt; Größe setzt Dialoge.cs -->
-    <ScrollViewer>
-        <StackPanel Spacing="12">
+    <!-- Inhalt eines modalen ContentDialog; Größe setzt Dialoge.cs, gescrollt wird im Dialog -->
+    <StackPanel Spacing="12">
 
             <TextBlock Text="{Binding InfoText}" Classes="hint"/>
 
@@ -95,7 +94,6 @@
                 <TextBlock Text="{Binding Status}" Classes="hint" FontSize="12" VerticalAlignment="Center"/>
             </StackPanel>
 
-        </StackPanel>
-    </ScrollViewer>
+    </StackPanel>
 
 </UserControl>

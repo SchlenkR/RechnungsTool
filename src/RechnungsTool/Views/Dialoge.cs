@@ -63,17 +63,20 @@ public class Dialoge : IDialoge
     public Task AuswertungAnzeigenAsync(AuswertungViewModel auswertung) =>
         GrossenDialogZeigenAsync("Auswertung", new AuswertungView { DataContext = auswertung });
 
-    /// <summary>Modaler Dialog, maximiert mit 120 px Abstand zu allen Fensterkanten.</summary>
+    /// <summary>
+    /// Modaler Dialog, maximiert mit 80 px Abstand zu allen Fensterkanten.
+    /// Gescrollt wird ausschließlich über den ContentDialog selbst (die Inhalts-Views
+    /// haben keinen eigenen ScrollViewer); die Buttonzeile bleibt dabei stehen.
+    /// </summary>
     static async Task GrossenDialogZeigenAsync(string titel, Avalonia.Controls.Control inhalt)
     {
         var fenster = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        var breite = Math.Max(420, (fenster?.ClientSize.Width ?? 1200) - 240);
-        var hoehe = Math.Max(320, (fenster?.ClientSize.Height ?? 800) - 240);
+        var breite = Math.Max(420, (fenster?.ClientSize.Width ?? 1200) - 160);
+        var hoehe = Math.Max(320, (fenster?.ClientSize.Height ?? 800) - 160);
 
         // Dialog-Innenabstände (Padding, Titel, Buttonzeile) ausgleichen
         inhalt.MinWidth = breite - 48;
         inhalt.MinHeight = hoehe - 150;
-        inhalt.MaxHeight = hoehe - 150;
 
         var dialog = new ContentDialog
         {

@@ -7,9 +7,8 @@
              x:Class="RechnungsTool.Views.AuswertungView"
              x:DataType="vm:AuswertungViewModel">
 
-    <!-- Wird als Inhalt eines modalen ContentDialog angezeigt; Größe setzt Dialoge.cs -->
-    <ScrollViewer>
-        <StackPanel Spacing="12">
+    <!-- Inhalt eines modalen ContentDialog; Größe setzt Dialoge.cs, gescrollt wird im Dialog -->
+    <StackPanel Spacing="12">
 
             <Border Classes="card">
                 <StackPanel Spacing="10">
@@ -103,7 +102,6 @@
                 </StackPanel>
             </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+    </StackPanel>
 
 </UserControl>
