@@ -136,14 +136,19 @@
 
                     <ScrollViewer Margin="0,8,0,0">
                         <StackPanel>
-                            <ListBox Classes="nav" Background="Transparent"
+                            <ListBox Name="RechnungsListe"
+                                     Classes="nav" Background="Transparent"
                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                      ItemsSource="{Binding Eintraege}"
                                      SelectedItem="{Binding AusgewaehlterEintrag}">
                                 <ListBox.DataTemplates>
                                     <DataTemplate DataType="vm:JahresKopf">
-                                        <TextBlock Text="{Binding Text}" FontWeight="Bold" FontSize="16"
-                                                   Margin="0,6,0,2"/>
+                                        <StackPanel Margin="0,12,0,0" Spacing="3">
+                                            <TextBlock Text="{Binding Text}"
+                                                       FontWeight="Bold" FontSize="17"
+                                                       Foreground="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                            <Border Height="1" Background="#C5CCEA"/>
+                                        </StackPanel>
                                     </DataTemplate>
                                     <DataTemplate DataType="vm:ListenEintrag">
                                         <Grid ColumnDefinitions="*,Auto,Auto">
