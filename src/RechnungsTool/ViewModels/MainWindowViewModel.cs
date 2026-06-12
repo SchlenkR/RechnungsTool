@@ -178,7 +178,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // Externe Änderungen im Datenordner
     readonly OrdnerWaechter _waechter = new();
-    [ObservableProperty] private bool externeAenderung;
+    bool _externDialogAktiv;
 
     // Gesamtbestand; die sichtbaren Collections entstehen daraus per Suche + Jahresgruppierung
     readonly List<ListenEintrag> _alleEintraege = new();
@@ -225,8 +225,38 @@ public partial class MainWindowViewModel : ViewModelBase
         _ = UpdatePruefenAsync();
 
         _waechter.ExterneAenderung += () =>
-            Avalonia.Threading.Dispatcher.UIThread.Post(() => ExterneAenderung = true);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => _ = ExterneAenderungMeldenAsync());
         _waechter.Ueberwachen(DatenOrdner);
+    }
+
+    /// <summary>Externe Änderung: modaler Dialog, danach wird zwingend neu geladen.</summary>
+    async Task ExterneAenderungMeldenAsync()
+    {
+        if (_externDialogAktiv)
+            return;
+
+        _externDialogAktiv = true;
+        try
+        {
+            var text = "Der Datenordner wurde außerhalb der Anwendung geändert. " +
+                       "Die Anwendung wird neu geladen.";
+            if (HatUngespeicherte)
+                text += "\n\nUngespeicherte Änderungen gehen dabei verloren.";
+
+            try
+            {
+                await Dialoge.InfoAsync("Daten geändert", text, "Neu laden");
+            }
+            catch
+            {
+                // z. B. wenn bereits ein anderer Dialog offen ist – trotzdem neu laden
+            }
+            NeuLadenErzwingen();
+        }
+        finally
+        {
+            _externDialogAktiv = false;
+        }
     }
 
     // --- Over-the-air-Update ------------------------------------------------
@@ -611,14 +641,17 @@ public partial class MainWindowViewModel : ViewModelBase
             if (!ok)
                 return;
         }
+        NeuLadenErzwingen();
+    }
 
+    void NeuLadenErzwingen()
+    {
         _neueEditoren.Clear();
         _offeneEditoren.Clear();
         _stammdatenSeite = null;
         AktuelleSeite = null;
         ListeAktualisieren(null);
         AusgewaehlterEintrag = Eintraege.OfType<ListenEintrag>().FirstOrDefault(e => e.Datei is { HatFehler: false });
-        ExterneAenderung = false;
     }
 
     // --- Speichern / Dirty-Tracking ----------------------------------------
@@ -802,7 +835,6 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(StatusZeile));
         ListeAktualisieren(null);
         _waechter.Ueberwachen(DatenOrdner);
-        ExterneAenderung = false;
     }
 
     // --- Nummernkreis -------------------------------------------------------
@@ -838,7 +870,7 @@ public partial class MainWindowViewModel : ViewModelBase
     class KeineDialoge : IDialoge
     {
         public Task<bool> BestaetigenAsync(string titel, string text, string aktion) => Task.FromResult(false);
-        public Task InfoAsync(string titel, string text) => Task.CompletedTask;
+        public Task InfoAsync(string titel, string text, string buttonText = "OK") => Task.CompletedTask;
         public Task<PdfKonfliktWahl> PdfKonfliktAsync(string dateiName) => Task.FromResult(PdfKonfliktWahl.Abbrechen);
         public Task<SchliessenWahl> SchliessenAbfragenAsync(int anzahl) => Task.FromResult(SchliessenWahl.Abbrechen);
         public Task<FreigebenWahl> FreigebenAbfragenAsync(string nummer) => Task.FromResult(FreigebenWahl.Abbrechen);

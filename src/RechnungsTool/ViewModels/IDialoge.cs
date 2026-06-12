@@ -29,7 +29,7 @@ public enum FreigebenWahl
 public interface IDialoge
 {
     Task<bool> BestaetigenAsync(string titel, string text, string aktion);
-    Task InfoAsync(string titel, string text);
+    Task InfoAsync(string titel, string text, string buttonText = "OK");
     Task<PdfKonfliktWahl> PdfKonfliktAsync(string dateiName);
     Task<SchliessenWahl> SchliessenAbfragenAsync(int anzahlUngespeichert);
     Task<FreigebenWahl> FreigebenAbfragenAsync(string nummer);

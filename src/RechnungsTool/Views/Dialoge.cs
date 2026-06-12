@@ -22,13 +22,13 @@ public class Dialoge : IDialoge
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
-    public async Task InfoAsync(string titel, string text)
+    public async Task InfoAsync(string titel, string text, string buttonText = "OK")
     {
         var dialog = new ContentDialog
         {
             Title = titel,
             Content = text,
-            CloseButtonText = "OK",
+            CloseButtonText = buttonText,
         };
         await dialog.ShowAsync();
     }
