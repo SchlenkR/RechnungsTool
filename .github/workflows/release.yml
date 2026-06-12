@@ -1,6 +1,7 @@
 name: Release
 
-# Release bauen: Tag im Format v* pushen (z. B. v1.0.0).
+# Jeder Push auf main released automatisch mit hochgezählter Patch-Version;
+# ein manuell gepushter Tag (v*) setzt die Version explizit (Minor-/Major-Sprung).
 # Mit konfigurierten Developer-ID-Secrets entstehen signierte, notarisierte DMGs
 # (Download im Browser, in Programme ziehen, fertig). Ohne Secrets: ad-hoc-Zips.
 #
@@ -12,8 +13,9 @@ name: Release
 #   APPLE_TEAM_ID               Team-ID (developer.apple.com → Membership)
 on:
   push:
-    tags: ['v*']
-  workflow_dispatch:
+    branches: ['main']   # automatischer Patch-Bump + Release bei jedem Push
+    tags: ['v*']         # manueller Tag für Minor-/Major-Sprünge
+  workflow_dispatch:     # nur bauen, Zips als Artefakte
 
 permissions:
   contents: write
@@ -26,6 +28,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # alle Tags für die Versionsermittlung
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -33,9 +37,26 @@ jobs:
 
       - name: Determine version
         run: |
-          VER="${GITHUB_REF_NAME#v}"
-          [[ "$VER" =~ ^[0-9]+\.[0-9]+ ]] || VER="0.0.0"
-          echo "APP_VERSION=$VER" >> "$GITHUB_ENV"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            # Manuell getaggt: Version aus dem Tag
+            TAG="$GITHUB_REF_NAME"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            # Push auf main: Patch-Version automatisch hochzählen
+            if git tag --points-at HEAD | grep -q '^v'; then
+              echo "SKIP_RELEASE=true" >> "$GITHUB_ENV"   # Tag-Lauf übernimmt das Release
+            fi
+            LETZTER="$(git tag --list 'v*' --sort=-v:refname | head -1)"
+            LETZTER="${LETZTER:-v0.0.0}"
+            IFS=. read -r MAJ MIN PATCH <<< "${LETZTER#v}"
+            TAG="v${MAJ}.${MIN}.$((PATCH + 1))"
+          else
+            # Manueller Lauf: nur bauen
+            TAG="v0.0.0"
+            echo "SKIP_RELEASE=true" >> "$GITHUB_ENV"
+          fi
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "APP_VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          echo "Version: $TAG"
 
       - name: Publish (Apple Silicon)
         run: build/publish-macos.sh osx-arm64 "$APP_VERSION"
@@ -70,7 +91,7 @@ jobs:
           for RID in osx-arm64 osx-x64; do
             ARCH="${RID#osx-}"
             APP="dist/$RID/RechnungsTool.app"
-            DMG="dist/RechnungsTool-${{ github.ref_name }}-macos-${ARCH}.dmg"
+            DMG="dist/RechnungsTool-${RELEASE_TAG}-macos-${ARCH}.dmg"
 
             # App mit Hardened Runtime signieren (Pflicht für Notarisierung)
             codesign --force --options runtime --timestamp \
@@ -94,8 +115,8 @@ jobs:
       - name: Zip app bundles (unsigned fallback)
         if: env.SIGNING_ENABLED != 'true'
         run: |
-          ditto -c -k --sequesterRsrc --keepParent dist/osx-arm64/RechnungsTool.app "dist/RechnungsTool-${{ github.ref_name }}-macos-arm64.zip"
-          ditto -c -k --sequesterRsrc --keepParent dist/osx-x64/RechnungsTool.app   "dist/RechnungsTool-${{ github.ref_name }}-macos-x64.zip"
+          ditto -c -k --sequesterRsrc --keepParent dist/osx-arm64/RechnungsTool.app "dist/RechnungsTool-${RELEASE_TAG}-macos-arm64.zip"
+          ditto -c -k --sequesterRsrc --keepParent dist/osx-x64/RechnungsTool.app   "dist/RechnungsTool-${RELEASE_TAG}-macos-x64.zip"
 
       - name: Write release notes
         run: |
@@ -124,17 +145,17 @@ jobs:
           fi
 
       - name: Create GitHub release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: env.SKIP_RELEASE != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            dist/RechnungsTool-${{ github.ref_name }}-* \
-            --title "RechnungsTool ${{ github.ref_name }}" \
+          gh release create "${RELEASE_TAG}" \
+            dist/RechnungsTool-${RELEASE_TAG}-* \
+            --title "RechnungsTool ${RELEASE_TAG}" \
             --notes-file /tmp/notes.md
 
       - name: Upload artifacts (manual run)
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: env.SKIP_RELEASE == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: RechnungsTool-macos

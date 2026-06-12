@@ -97,7 +97,9 @@ In VSCode: „Tasks: Run Task“ → **publish-macos** (ruft dasselbe Skript auf
 
 ## Release
 
-Tag pushen → GitHub Action baut arm64- und Intel-Bundles und veröffentlicht sie als GitHub-Release:
+**Vollautomatisch:** Jeder Push auf `main` baut arm64- und Intel-Bundles, zählt die Patch-Version hoch (v0.6.0 → v0.6.1) und veröffentlicht das GitHub-Release. Installierte Apps bieten die neue Version beim nächsten Start als Over-the-air-Update an.
+
+Für Minor-/Major-Sprünge die Version explizit taggen:
 
 ```bash
 git tag v1.0.0 && git push origin v1.0.0
