@@ -151,6 +151,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool updateVerfuegbar;
     [ObservableProperty] private string updateText = "";
 
+    // Externe Änderungen im Datenordner
+    readonly OrdnerWaechter _waechter = new();
+    [ObservableProperty] private bool externeAenderung;
+
     public ObservableCollection<ListenEintrag> Eintraege { get; } = new();
     public ObservableCollection<ListenEintrag> PapierkorbEintraege { get; } = new();
 
@@ -184,6 +188,10 @@ public partial class MainWindowViewModel : ViewModelBase
             AusgewaehlterEintrag = Eintraege.FirstOrDefault(e => e.Datei is { HatFehler: false });
 
         _ = UpdatePruefenAsync();
+
+        _waechter.ExterneAenderung += () =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => ExterneAenderung = true);
+        _waechter.Ueberwachen(DatenOrdner);
     }
 
     // --- Over-the-air-Update ------------------------------------------------
@@ -516,6 +524,7 @@ public partial class MainWindowViewModel : ViewModelBase
         AktuelleSeite = null;
         ListeAktualisieren(null);
         AusgewaehlterEintrag = Eintraege.FirstOrDefault(e => e.Datei is { HatFehler: false });
+        ExterneAenderung = false;
     }
 
     // --- Speichern / Dirty-Tracking ----------------------------------------
@@ -698,6 +707,8 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(DatenOrdner));
         OnPropertyChanged(nameof(StatusZeile));
         ListeAktualisieren(null);
+        _waechter.Ueberwachen(DatenOrdner);
+        ExterneAenderung = false;
     }
 
     // --- Nummernkreis -------------------------------------------------------

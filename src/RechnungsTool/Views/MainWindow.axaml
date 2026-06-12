@@ -72,6 +72,20 @@
                     Message="{Binding OrdnerWarnung}"
                     IsOpen="{Binding OrdnerWarnung, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
+        <!-- Externe Änderung im Datenordner -->
+        <ui:InfoBar DockPanel.Dock="Top"
+                    Margin="20,0,20,8"
+                    Severity="Informational"
+                    IsClosable="True"
+                    Title="Daten geändert"
+                    Message="Der Datenordner wurde außerhalb der Anwendung geändert."
+                    IsOpen="{Binding ExterneAenderung, Mode=TwoWay}">
+            <ui:InfoBar.ActionButton>
+                <Button Classes="secondary" Content="Neu laden"
+                        Command="{Binding VollNeuLadenCommand}"/>
+            </ui:InfoBar.ActionButton>
+        </ui:InfoBar>
+
         <!-- Update-Banner (Over-the-air) -->
         <ui:InfoBar DockPanel.Dock="Top"
                     Margin="20,0,20,8"

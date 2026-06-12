@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 using RechnungsTool.Models;
@@ -24,6 +26,28 @@ public static class XmlStore
 
     static readonly XmlSerializer RechnungSerializer = new(typeof(Rechnung));
     static readonly XmlSerializer StammdatenSerializer = new(typeof(Stammdaten));
+
+    // Eigene Schreibvorgänge dürfen vom OrdnerWaechter nicht als externe
+    // Änderung gemeldet werden; die Nachlauffrist fängt verspätete
+    // FileSystemWatcher-Events ab.
+    static int _eigeneSchreibvorgaenge;
+    static readonly TimeSpan Nachlauffrist = TimeSpan.FromMilliseconds(800);
+
+    public static bool EigenerSchreibvorgangAktiv => Volatile.Read(ref _eigeneSchreibvorgaenge) > 0;
+
+    static T EigenerSchreibvorgang<T>(Func<T> aktion)
+    {
+        Interlocked.Increment(ref _eigeneSchreibvorgaenge);
+        try
+        {
+            return aktion();
+        }
+        finally
+        {
+            _ = Task.Delay(Nachlauffrist)
+                .ContinueWith(_ => Interlocked.Decrement(ref _eigeneSchreibvorgaenge));
+        }
+    }
 
     public record OrdnerInhalt(
         Stammdaten? Stammdaten,
@@ -89,29 +113,36 @@ public static class XmlStore
     }
 
     /// <summary>Verschiebt eine Rechnung in den Papierkorb (Unterstrich-Präfix im Dateinamen).</summary>
-    public static string InPapierkorb(string pfad)
-    {
-        var ziel = Path.Combine(Path.GetDirectoryName(pfad)!, PapierkorbPrefix + Path.GetFileName(pfad));
-        File.Move(pfad, ziel);
-        return ziel;
-    }
+    public static string InPapierkorb(string pfad) =>
+        EigenerSchreibvorgang(() =>
+        {
+            var ziel = Path.Combine(Path.GetDirectoryName(pfad)!, PapierkorbPrefix + Path.GetFileName(pfad));
+            File.Move(pfad, ziel);
+            return ziel;
+        });
 
     /// <summary>Stellt eine Rechnung aus dem Papierkorb wieder her; wirft IOException bei Namenskonflikt.</summary>
-    public static string AusPapierkorb(string pfad)
-    {
-        var name = Path.GetFileName(pfad);
-        if (!name.StartsWith(PapierkorbPrefix, StringComparison.Ordinal))
-            return pfad;
+    public static string AusPapierkorb(string pfad) =>
+        EigenerSchreibvorgang(() =>
+        {
+            var name = Path.GetFileName(pfad);
+            if (!name.StartsWith(PapierkorbPrefix, StringComparison.Ordinal))
+                return pfad;
 
-        var ziel = Path.Combine(Path.GetDirectoryName(pfad)!, name[PapierkorbPrefix.Length..]);
-        if (File.Exists(ziel))
-            throw new IOException($"Es existiert bereits eine Datei „{Path.GetFileName(ziel)}“.");
+            var ziel = Path.Combine(Path.GetDirectoryName(pfad)!, name[PapierkorbPrefix.Length..]);
+            if (File.Exists(ziel))
+                throw new IOException($"Es existiert bereits eine Datei „{Path.GetFileName(ziel)}“.");
 
-        File.Move(pfad, ziel);
-        return ziel;
-    }
+            File.Move(pfad, ziel);
+            return ziel;
+        });
 
-    public static void Loeschen(string pfad) => File.Delete(pfad);
+    public static void Loeschen(string pfad) =>
+        EigenerSchreibvorgang<object?>(() =>
+        {
+            File.Delete(pfad);
+            return null;
+        });
 
     /// <summary>
     /// Serialisiert eine Rechnung in-memory – Referenzdarstellung für den
@@ -140,27 +171,30 @@ public static class XmlStore
         RechnungPrefix + DateinamenSicher(nummer) + ".xml";
 
     /// <summary>Speichert die Rechnung; bei geänderter Nummer wird die alte Datei entfernt.</summary>
-    public static string RechnungSpeichern(string ordner, Rechnung rechnung, string? bisherigerPfad)
-    {
-        Directory.CreateDirectory(ordner);
-        var pfad = Path.Combine(ordner, RechnungsDateiName(rechnung.Nummer));
-        Serialisieren(RechnungSerializer, pfad, rechnung);
-
-        if (bisherigerPfad is not null
-            && !string.Equals(bisherigerPfad, pfad, StringComparison.Ordinal)
-            && File.Exists(bisherigerPfad))
+    public static string RechnungSpeichern(string ordner, Rechnung rechnung, string? bisherigerPfad) =>
+        EigenerSchreibvorgang(() =>
         {
-            File.Delete(bisherigerPfad);
-        }
+            Directory.CreateDirectory(ordner);
+            var pfad = Path.Combine(ordner, RechnungsDateiName(rechnung.Nummer));
+            Serialisieren(RechnungSerializer, pfad, rechnung);
 
-        return pfad;
-    }
+            if (bisherigerPfad is not null
+                && !string.Equals(bisherigerPfad, pfad, StringComparison.Ordinal)
+                && File.Exists(bisherigerPfad))
+            {
+                File.Delete(bisherigerPfad);
+            }
 
-    public static void StammdatenSpeichern(string ordner, Stammdaten stammdaten)
-    {
-        Directory.CreateDirectory(ordner);
-        Serialisieren(StammdatenSerializer, Path.Combine(ordner, StammdatenDateiName), stammdaten);
-    }
+            return pfad;
+        });
+
+    public static void StammdatenSpeichern(string ordner, Stammdaten stammdaten) =>
+        EigenerSchreibvorgang<object?>(() =>
+        {
+            Directory.CreateDirectory(ordner);
+            Serialisieren(StammdatenSerializer, Path.Combine(ordner, StammdatenDateiName), stammdaten);
+            return null;
+        });
 
     static T Deserialisieren<T>(XmlSerializer serializer, string pfad)
     {
