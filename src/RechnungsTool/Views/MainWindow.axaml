@@ -7,7 +7,7 @@
         mc:Ignorable="d" d:DesignWidth="1440" d:DesignHeight="920"
         x:Class="RechnungsTool.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/icon.png"
         Width="1440" Height="920"
         Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
         Title="RechnungsTool">

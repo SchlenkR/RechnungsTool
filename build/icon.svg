@@ -1,0 +1,61 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="0.5" stop-color="#5B5FC7"/>
+      <stop offset="1" stop-color="#0E8174"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E9EDFB"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="26" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <filter id="badgeShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle-Hintergrund -->
+  <rect x="100" y="100" width="824" height="824" rx="188" fill="url(#bg)"/>
+  <!-- Glanz oben -->
+  <path d="M100 400 Q 512 270 924 400 L 924 288 Q 924 100 736 100 L 288 100 Q 100 100 100 288 Z"
+        fill="#FFFFFF" opacity="0.10"/>
+
+  <!-- Kassenbon, leicht gekippt, mit Zackenkante unten -->
+  <g transform="rotate(-8 512 512)" filter="url(#shadow)">
+    <path fill="url(#paper)" d="
+      M 352 268
+      q 0 -34 34 -34
+      h 252
+      q 34 0 34 34
+      v 468
+      l -32 30 l -32 -30 l -32 30 l -32 -30 l -32 30 l -32 -30 l -32 30 l -32 -30 l -30 30 l -30 -30
+      z"/>
+    <!-- Bon-Inhalt -->
+    <rect x="394" y="300" width="148" height="26" rx="13" fill="#5B5FC7" opacity="0.85"/>
+    <rect x="394" y="368" width="220" height="18" rx="9" fill="#C3C9E8"/>
+    <rect x="394" y="408" width="180" height="18" rx="9" fill="#C3C9E8"/>
+    <rect x="394" y="448" width="206" height="18" rx="9" fill="#C3C9E8"/>
+    <line x1="394" y1="510" x2="630" y2="510" stroke="#ADB5DD" stroke-width="8"
+          stroke-dasharray="18 14" stroke-linecap="round"/>
+    <rect x="394" y="548" width="96" height="22" rx="11" fill="#8A93C9"/>
+    <rect x="510" y="544" width="120" height="30" rx="15" fill="#0E8174"/>
+  </g>
+
+  <!-- Euro-Badge -->
+  <g filter="url(#badgeShadow)">
+    <circle cx="668" cy="690" r="124" fill="#0E8174" stroke="#FFFFFF" stroke-width="16"/>
+    <text x="668" y="700" text-anchor="middle" dominant-baseline="middle"
+          font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif"
+          font-size="160" font-weight="800" fill="#FFFFFF">€</text>
+  </g>
+
+  <!-- Sparkles -->
+  <g fill="#FFFFFF">
+    <path d="M 760 218 l 14 38 l 38 14 l -38 14 l -14 38 l -14 -38 l -38 -14 l 38 -14 z" opacity="0.95"/>
+    <path d="M 836 330 l 9 24 l 24 9 l -24 9 l -9 24 l -9 -24 l -24 -9 l 24 -9 z" opacity="0.8"/>
+    <path d="M 252 736 l 11 30 l 30 11 l -30 11 l -11 30 l -11 -30 l -30 -11 l 30 -11 z" opacity="0.85"/>
+  </g>
+</svg>
