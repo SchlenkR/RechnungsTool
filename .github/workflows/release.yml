@@ -20,6 +20,11 @@ on:
 permissions:
   contents: write
 
+# Release-Läufe serialisieren, sonst berechnen parallele Pushes dieselbe Version
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 env:
   SIGNING_ENABLED: ${{ secrets.MACOS_CERTIFICATE != '' }}
 
@@ -48,7 +53,12 @@ jobs:
             LETZTER="$(git tag --list 'v*' --sort=-v:refname | head -1)"
             LETZTER="${LETZTER:-v0.0.0}"
             IFS=. read -r MAJ MIN PATCH <<< "${LETZTER#v}"
-            TAG="v${MAJ}.${MIN}.$((PATCH + 1))"
+            PATCH=$((PATCH + 1))
+            # Sicherheitsnetz: bereits vergebene Tags (z. B. aus parallelen Läufen) überspringen
+            while git ls-remote --exit-code --tags origin "refs/tags/v${MAJ}.${MIN}.${PATCH}" >/dev/null 2>&1; do
+              PATCH=$((PATCH + 1))
+            done
+            TAG="v${MAJ}.${MIN}.${PATCH}"
           else
             # Manueller Lauf: nur bauen
             TAG="v0.0.0"
