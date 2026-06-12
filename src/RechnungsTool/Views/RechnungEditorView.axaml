@@ -192,9 +192,11 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:PositionViewModel">
                                         <StackPanel Margin="0,0,0,8">
+                                            <!-- Alle Felder oben ausgerichtet, damit die Spalten auch bei
+                                                 mehrzeiligem Leistungstext sauber fluchten -->
                                             <Grid ColumnDefinitions="32,*,60,64,80,92,32">
                                                 <Button Grid.Column="0" Classes="ghost" Padding="6"
-                                                        VerticalAlignment="Center" Margin="0,0,6,0"
+                                                        VerticalAlignment="Top" Margin="0,2,6,0"
                                                         ToolTip.Tip="Position kopieren (identische Position darunter einfügen)"
                                                         Command="{Binding $parent[ItemsControl].((vm:RechnungEditorViewModel)DataContext).PositionKopierenCommand}"
                                                         CommandParameter="{Binding}">
@@ -202,14 +204,17 @@
                                                 </Button>
                                                 <TextBox Grid.Column="1" Text="{Binding Text}"
                                                          TextWrapping="Wrap" AcceptsReturn="True"/>
-                                                <TextBox Grid.Column="2" Text="{Binding MengeText}" Margin="8,0,0,0"/>
-                                                <TextBox Grid.Column="3" Text="{Binding Einheit}" Margin="8,0,0,0"/>
-                                                <TextBox Grid.Column="4" Text="{Binding EinzelpreisText}" Margin="8,0,0,0"/>
+                                                <TextBox Grid.Column="2" Text="{Binding MengeText}"
+                                                         VerticalAlignment="Top" Margin="8,0,0,0"/>
+                                                <TextBox Grid.Column="3" Text="{Binding Einheit}"
+                                                         VerticalAlignment="Top" Margin="8,0,0,0"/>
+                                                <TextBox Grid.Column="4" Text="{Binding EinzelpreisText}"
+                                                         VerticalAlignment="Top" Margin="8,0,0,0"/>
                                                 <TextBlock Grid.Column="5" Text="{Binding BetragText}"
-                                                           VerticalAlignment="Center" HorizontalAlignment="Right"
-                                                           Margin="8,0,4,0"/>
+                                                           VerticalAlignment="Top" HorizontalAlignment="Right"
+                                                           Margin="8,8,4,0"/>
                                                 <Button Grid.Column="6" Classes="ghost" Padding="6"
-                                                        VerticalAlignment="Center"
+                                                        VerticalAlignment="Top" Margin="0,2,0,0"
                                                         ToolTip.Tip="Position entfernen"
                                                         Command="{Binding $parent[ItemsControl].((vm:RechnungEditorViewModel)DataContext).PositionEntfernenCommand}"
                                                         CommandParameter="{Binding}">

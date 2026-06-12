@@ -99,11 +99,12 @@ public class PdfDienst
                     DisplayHeaderFooter = true,
                     HeaderTemplate = "<span></span>",
                     FooterTemplate = fusszeile,
-                    // DIN-5008-Ränder; unten Platz für die Fußzeile
+                    // DIN-5008-Ränder, druckerfreundlich: unten großzügig Platz,
+                    // damit die Fußzeile nicht im unbedruckbaren Bereich landet
                     MarginOptions = new PuppeteerSharp.Media.MarginOptions
                     {
-                        Top = "16mm",
-                        Bottom = "34mm",
+                        Top = "18mm",
+                        Bottom = "38mm",
                         Left = "25mm",
                         Right = "20mm",
                     },
