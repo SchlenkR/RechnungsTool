@@ -88,7 +88,7 @@ public static class RechnungsHtml
         var f = s.Firma;
         return $"""
             <div style="width:100%; box-sizing:border-box; padding:0 20mm 10mm 25mm;
-                        font-size:7px; font-family:Helvetica,Arial,sans-serif; color:#666666;">
+                        font-size:10px; font-family:Helvetica,Arial,sans-serif; color:#666666;">
               <div style="border-top:0.5px solid #bbbbbb; padding-top:5px;
                           display:flex; justify-content:space-between; gap:16px;">
                 <div><b>{H(f.Name)}</b><br>{H(f.Strasse)}<br>{H($"{f.Plz} {f.Ort}".Trim())}</div>
