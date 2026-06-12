@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RechnungsTool.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="RechnungsTool.Views.EinstellungenView"
+             x:DataType="vm:EinstellungenViewModel">
+
+    <!-- Wird als Inhalt eines modalen ContentDialog angezeigt; Größe setzt Dialoge.cs -->
+    <StackPanel Spacing="12">
+
+        <Border Classes="card">
+            <StackPanel Spacing="10">
+                <TextBlock Text="DATENORDNER" Classes="cardTitle"/>
+                <TextBlock Classes="hint" TextWrapping="Wrap"
+                           Text="Hier liegen stammdaten.xml und alle rechnung-*.xml – lokal oder auf einem Share. Andere XML-Dateien sind in diesem Ordner nicht erlaubt."/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding DatenOrdner}"
+                             Watermark="~/Documents/Rechnungen"/>
+                    <Button Grid.Column="2" Click="OrdnerWaehlen">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:SymbolIcon Symbol="Folder"/>
+                            <TextBlock Text="Durchsuchen…"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button Classes="secondary" Command="{Binding SpeichernCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:SymbolIcon Symbol="Save"/>
+                            <TextBlock Text="Übernehmen"/>
+                        </StackPanel>
+                    </Button>
+                    <TextBlock Text="{Binding Status}" Classes="hint" FontSize="12" VerticalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+            <StackPanel Spacing="6">
+                <TextBlock Text="KONFIGURATIONSDATEI" Classes="cardTitle"/>
+                <TextBlock Text="{Binding ConfigPfad}" FontFamily="Menlo,Consolas,monospace" FontSize="12"/>
+                <TextBlock Classes="hint" TextWrapping="Wrap"
+                           Text="Die Einstellungen werden beim Übernehmen sofort dorthin geschrieben; ~ wird automatisch aufgelöst."/>
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+
+</UserControl>

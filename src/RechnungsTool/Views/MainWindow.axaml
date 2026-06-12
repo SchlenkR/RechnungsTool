@@ -1,0 +1,194 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RechnungsTool.ViewModels"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1440" d:DesignHeight="920"
+        x:Class="RechnungsTool.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Width="1440" Height="920"
+        Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+        Title="RechnungsTool">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Window.Styles>
+        <Style Selector="ListBox.nav ListBoxItem">
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="Button.itemAction">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="7"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Styles>
+
+    <DockPanel>
+
+        <!-- Kopfleiste -->
+        <Border DockPanel.Dock="Top" Padding="20,12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                    <ui:SymbolIcon Symbol="Document" FontSize="20" VerticalAlignment="Center"/>
+                    <TextBlock Text="RechnungsTool" FontSize="17" FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <Button Classes="secondary"
+                            Command="{Binding AlleSpeichernAusfuehrenCommand}"
+                            ToolTip.Tip="Alle ungespeicherten Rechnungen und Stammdaten speichern">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:SymbolIcon Symbol="Save"/>
+                            <TextBlock Text="Alle speichern"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="ghost" Padding="8"
+                            ToolTip.Tip="Einstellungen"
+                            Command="{Binding EinstellungenOeffnenCommand}">
+                        <ui:SymbolIcon Symbol="Settings" FontSize="18"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Statuszeile unten -->
+        <Border DockPanel.Dock="Bottom" Padding="20,5">
+            <TextBlock Text="{Binding StatusZeile}" Classes="hint"/>
+        </Border>
+
+        <!-- Warnbanner: fremde XML-Dateien / kaputte stammdaten.xml -->
+        <ui:InfoBar DockPanel.Dock="Top"
+                    Margin="20,0,20,8"
+                    Severity="Warning"
+                    IsClosable="False"
+                    Title="Datenordner"
+                    Message="{Binding OrdnerWarnung}"
+                    IsOpen="{Binding OrdnerWarnung, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+        <Grid ColumnDefinitions="290,*" Margin="12,0,12,8">
+
+            <!-- Sidebar: Rechnungsübersicht -->
+            <Border Grid.Column="0" Classes="card" Padding="12">
+                <DockPanel>
+                    <Button DockPanel.Dock="Top" Classes="create"
+                            HorizontalAlignment="Stretch"
+                            Command="{Binding NeueRechnungCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Add"/>
+                            <TextBlock Text="Neue Rechnung"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button DockPanel.Dock="Bottom" Classes="secondary" HorizontalAlignment="Stretch"
+                            Margin="0,10,0,0"
+                            Command="{Binding StammdatenOeffnenCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:SymbolIcon Symbol="People"/>
+                            <TextBlock Text="Stammdaten"/>
+                            <TextBlock Text="●" FontSize="10" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                       IsVisible="{Binding StammdatenDirty}"/>
+                        </StackPanel>
+                    </Button>
+
+                    <TextBlock DockPanel.Dock="Top" Text="RECHNUNGEN" Classes="hint"
+                               Margin="4,14,0,6" FontWeight="SemiBold"/>
+
+                    <ScrollViewer>
+                        <StackPanel>
+                            <ListBox Classes="nav" Background="Transparent"
+                                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                     ItemsSource="{Binding Eintraege}"
+                                     SelectedItem="{Binding AusgewaehlterEintrag}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ListenEintrag">
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Titel}" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="🔒" FontSize="11" VerticalAlignment="Center"
+                                                               ToolTip.Tip="Als PDF gespeichert – gegen Änderungen gesperrt"
+                                                               IsVisible="{Binding Gesperrt}"/>
+                                                    <TextBlock Text="●" FontSize="10" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                                               ToolTip.Tip="Ungespeicherte Änderungen"
+                                                               IsVisible="{Binding Editor.IstDirty, FallbackValue=False}"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding EmpfaengerZeile}" FontSize="11"
+                                                           Classes="hint" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding DatumZeile}" FontSize="11"
+                                                           Classes="hint"/>
+                                                <TextBlock Text="{Binding ProblemText}" FontSize="11"
+                                                           Foreground="IndianRed" TextWrapping="Wrap"
+                                                           IsVisible="{Binding HatProblem}"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Classes="itemAction"
+                                                    ToolTip.Tip="Rechnung speichern"
+                                                    IsVisible="{Binding Editor.IstDirty, FallbackValue=False}"
+                                                    Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).EintragSpeichernCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Save" FontSize="15" Foreground="#5B5FC7"/>
+                                            </Button>
+                                            <Button Grid.Column="2" Classes="itemAction"
+                                                    ToolTip.Tip="Rechnung in neue Rechnung übernehmen"
+                                                    IsVisible="{Binding KannVorlageSein}"
+                                                    Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).NeueRechnungFuerEmpfaengerCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Add" FontSize="15" Foreground="#0E8174"/>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock Text="PAPIERKORB" Classes="hint"
+                                       Margin="4,16,0,6" FontWeight="SemiBold"
+                                       IsVisible="{Binding PapierkorbVorhanden}"/>
+                            <ListBox Classes="nav" Background="Transparent"
+                                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                     IsVisible="{Binding PapierkorbVorhanden}"
+                                     ItemsSource="{Binding PapierkorbEintraege}"
+                                     SelectedItem="{Binding AusgewaehlterPapierkorbEintrag}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ListenEintrag">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="{Binding Titel}" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding EmpfaengerZeile}" FontSize="11"
+                                                       Classes="hint" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding DatumZeile}" FontSize="11"
+                                                       Classes="hint"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- Aktuelle Seite (Editor / Stammdaten / Einstellungen / Fehler) -->
+            <Panel Grid.Column="1" Margin="12,0,0,0">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10"
+                            IsVisible="{Binding AktuelleSeite, Converter={x:Static ObjectConverters.IsNull}}">
+                    <ui:SymbolIcon Symbol="Document" FontSize="40"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   HorizontalAlignment="Center"/>
+                    <TextBlock Text="Rechnung auswählen oder neue Rechnung anlegen"
+                               Classes="hint" FontSize="13"/>
+                </StackPanel>
+                <ContentControl Content="{Binding AktuelleSeite}"/>
+            </Panel>
+
+        </Grid>
+
+    </DockPanel>
+
+</Window>

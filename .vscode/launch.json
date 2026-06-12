@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "RechnungsTool (Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/src/RechnungsTool/bin/Debug/net10.0/RechnungsTool.dll",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Attach an laufenden Prozess",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}

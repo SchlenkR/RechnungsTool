@@ -1,0 +1,100 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RechnungsTool.App"
+             xmlns:local="using:RechnungsTool"
+             xmlns:sty="using:FluentAvalonia.Styling"
+             RequestedThemeVariant="Light">
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <sty:FluentAvaloniaTheme/>
+
+        <!-- Wiederverwendbare Karten- und Button-Stile für einen modernen Look -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="18"/>
+        </Style>
+        <Style Selector="TextBlock.cardTitle">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <!-- Sekundäre Aktionen: dezent getönt, klar als klickbar erkennbar,
+             aber abgesetzt vom Akzent-Button (Primäraktion) -->
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#E8EBF7"/>
+            <Setter Property="BorderBrush" Value="#C5CCEA"/>
+        </Style>
+        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#D9DEF2"/>
+            <Setter Property="BorderBrush" Value="#B3BCE2"/>
+        </Style>
+        <Style Selector="Button.secondary:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#CBD2EC"/>
+        </Style>
+
+        <!-- „Neu anlegen“-Aktionen (Neue Rechnung, In neue Rechnung übernehmen) -->
+        <Style Selector="Button.create">
+            <Setter Property="Background" Value="#0E8174"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#0B6A60"/>
+        </Style>
+        <Style Selector="Button.create:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#0B6A60"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.create:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#095850"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- Destruktive Aktionen (Löschen) -->
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#C42B1C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#A52315"/>
+        </Style>
+        <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#A52315"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.danger:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#8A1D11"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- In-place-Validierungstexte -->
+        <Style Selector="TextBlock.feldFehler">
+            <Setter Property="Foreground" Value="IndianRed"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="2,2,0,0"/>
+        </Style>
+        <Style Selector="TextBlock.feldWarnung">
+            <Setter Property="Foreground" Value="DarkOrange"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="2,2,0,0"/>
+        </Style>
+    </Application.Styles>
+</Application>

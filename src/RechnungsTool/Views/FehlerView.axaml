@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RechnungsTool.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="RechnungsTool.Views.FehlerView"
+             x:DataType="vm:FehlerViewModel">
+
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Top" Spacing="6">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding DateiName}" FontSize="18" FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Classes="danger" Command="{Binding LoeschenCommand}"
+                            IsVisible="{Binding NichtImPapierkorb}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:SymbolIcon Symbol="Delete"/>
+                            <TextBlock Text="Löschen"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="secondary" Command="{Binding WiederherstellenCommand}"
+                            IsVisible="{Binding ImPapierkorb}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:SymbolIcon Symbol="Undo"/>
+                            <TextBlock Text="Wiederherstellen"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="danger" Command="{Binding EndgueltigLoeschenCommand}"
+                            IsVisible="{Binding ImPapierkorb}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:SymbolIcon Symbol="Delete"/>
+                            <TextBlock Text="Endgültig löschen"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+            <TextBlock Text="{Binding Pfad}" FontSize="11" Foreground="Gray"/>
+            <Border Background="#30FF4040" CornerRadius="4" Padding="10,8" Margin="0,8,0,8">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Diese Datei konnte nicht als Rechnung geparst werden:" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Fehler}" TextWrapping="Wrap"/>
+                    <TextBlock Text="Bitte die Datei extern korrigieren und anschließend neu laden (⟳)."
+                               FontSize="11" Foreground="Gray"/>
+                </StackPanel>
+            </Border>
+            <TextBlock Text="Dateiinhalt:" FontWeight="SemiBold"/>
+        </StackPanel>
+        <ScrollViewer>
+            <TextBox Text="{Binding Inhalt, Mode=OneWay}" IsReadOnly="True" AcceptsReturn="True"
+                     FontFamily="Menlo,Consolas,monospace" FontSize="12" TextWrapping="Wrap"/>
+        </ScrollViewer>
+    </DockPanel>
+
+</UserControl>

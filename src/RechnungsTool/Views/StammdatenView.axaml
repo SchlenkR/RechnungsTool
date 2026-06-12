@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RechnungsTool.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="900"
+             x:Class="RechnungsTool.Views.StammdatenView"
+             x:DataType="vm:StammdatenViewModel">
+
+    <ScrollViewer>
+        <StackPanel Spacing="12" MaxWidth="680" HorizontalAlignment="Left">
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Stammdaten" FontSize="20" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding InfoText}" Classes="hint"/>
+            </StackPanel>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="UNTERNEHMEN" Classes="cardTitle"/>
+                    <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name / Firma" Classes="label"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding FirmaName}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Inhaber" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Inhaber}" Watermark="optional" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Straße" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Strasse}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="PLZ / Ort" Classes="label" Margin="0,8,0,0"/>
+                        <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="100,8,*" Margin="0,8,0,0">
+                            <TextBox Grid.Column="0" Text="{Binding Plz}"/>
+                            <TextBox Grid.Column="2" Text="{Binding Ort}"/>
+                        </Grid>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Telefon" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Telefon}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="E-Mail" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Email}" Margin="0,8,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="STEUER (STEUERNUMMER ODER UST-IDNR. IST PFLICHT)" Classes="cardTitle"/>
+                    <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Steuernummer" Classes="label"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Steuernummer}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="USt-IdNr." Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding UstIdNr}"
+                                 Watermark="optional, hat Vorrang auf der Rechnung" Margin="0,8,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="BANKVERBINDUNG" Classes="cardTitle"/>
+                    <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Kontoinhaber" Classes="label"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Kontoinhaber}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="IBAN" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Iban}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="BIC" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Bic}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Bank" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding BankName}" Margin="0,8,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="RECHNUNGSSTELLUNG" Classes="cardTitle"/>
+                    <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Start-Rechnungsnummer" Classes="label"/>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                            <TextBox Text="{Binding StartNummer}" Width="140"/>
+                            <TextBlock Text="letzte bereits vergebene Nummer (Format JJJJ-NN)"
+                                       Classes="hint" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Zahlungsziel (Tage)" Classes="label" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ZahlungszielTageText}" Width="80"
+                                 HorizontalAlignment="Left" Margin="0,8,0,0"/>
+                    </Grid>
+                    <TextBlock Classes="hint" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Text="Es gilt die Kleinunternehmerregelung (§ 19 UStG) – auf Rechnungen wird keine Umsatzsteuer ausgewiesen. Der Hinweis ist fest im Rechnungstemplate hinterlegt."/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Button Classes="secondary" Command="{Binding SpeichernCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Save"/>
+                        <TextBlock Text="Stammdaten speichern"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Text="{Binding Status}" Classes="hint" FontSize="12" VerticalAlignment="Center"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

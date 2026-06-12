@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Rechnung {{NUMMER}}</title>
+<style>
+  /* DIN-A4-One-Pager; Seitenränder über body-padding, @page ohne Rand */
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { width: 210mm; }
+  body {
+    position: relative;
+    min-height: 296mm;
+    padding: 16mm 20mm 42mm 25mm; /* DIN 5008: links 25mm, rechts 20mm */
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+    background: #ffffff;
+  }
+
+  .kopf {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 22mm;
+  }
+  .kopf .firma {
+    text-align: right;
+    font-size: 9pt;
+    color: #444;
+  }
+  .kopf .firma .firmenname {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 1mm;
+  }
+
+  .anschriftzeile {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8mm;
+  }
+
+  .absenderzeile {
+    font-size: 7pt;
+    color: #777;
+    border-bottom: 0.3mm solid #bbb;
+    padding-bottom: 0.8mm;
+    margin-bottom: 3mm;
+    width: 85mm;
+  }
+  .empfaenger {
+    width: 85mm;
+    min-height: 27mm;
+    font-size: 10.5pt;
+  }
+
+  .meta {
+    font-size: 9.5pt;
+    align-self: flex-end;
+  }
+  .meta table { border-collapse: collapse; }
+  .meta td { padding: 0.4mm 0; vertical-align: top; }
+  .meta td.label { color: #666; padding-right: 6mm; }
+  .meta td.wert { text-align: right; }
+
+  h1 {
+    font-size: 14pt;
+    font-weight: 600;
+    margin: 12mm 0 6mm 0;
+  }
+
+  table.positionen {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+  table.positionen th {
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 0.4mm solid #1a1a1a;
+    padding: 1.5mm 2mm;
+  }
+  table.positionen td {
+    border-bottom: 0.2mm solid #ddd;
+    padding: 1.8mm 2mm;
+    vertical-align: top;
+  }
+  table.positionen .num { text-align: right; white-space: nowrap; }
+  table.positionen tfoot td {
+    border-bottom: none;
+    border-top: 0.4mm solid #1a1a1a;
+    font-weight: 600;
+    font-size: 10.5pt;
+    padding-top: 2.5mm;
+  }
+
+  .ust-hinweis {
+    margin-top: 6mm;
+    font-size: 9.5pt;
+  }
+  .zahlung { margin-top: 4mm; }
+  .freitext { margin-top: 4mm; white-space: pre-wrap; }
+  .gruss { margin-top: 8mm; }
+
+  .fuss {
+    position: absolute;
+    left: 25mm;
+    right: 20mm;
+    bottom: 12mm;
+    display: flex;
+    justify-content: space-between;
+    gap: 8mm;
+    border-top: 0.3mm solid #bbb;
+    padding-top: 2.5mm;
+    font-size: 7.5pt;
+    color: #666;
+  }
+  .fuss .block { max-width: 33%; }
+</style>
+</head>
+<body>
+
+  <header class="kopf">
+    <div class="firma">
+      <div class="firmenname">{{FIRMA_NAME}}</div>
+      {{FIRMA_INHABER_ZEILE}}
+      <div>{{FIRMA_STRASSE}}</div>
+      <div>{{FIRMA_PLZ}} {{FIRMA_ORT}}</div>
+      {{FIRMA_KONTAKT_ZEILEN}}
+    </div>
+  </header>
+
+  <div class="anschriftzeile">
+    <div>
+      <div class="absenderzeile">{{ABSENDERZEILE}}</div>
+      <div class="empfaenger">
+        {{EMPFAENGER_BLOCK}}
+      </div>
+    </div>
+    <div class="meta">
+      <table>
+        <tr><td class="label">Rechnungsnummer</td><td class="wert">{{NUMMER}}</td></tr>
+        <tr><td class="label">Rechnungsdatum</td><td class="wert">{{DATUM}}</td></tr>
+        <tr><td class="label">Leistungszeitraum</td><td class="wert">{{LEISTUNGSZEITRAUM}}</td></tr>
+        {{STEUER_ZEILE}}
+      </table>
+    </div>
+  </div>
+
+  <h1>Rechnung Nr. {{NUMMER}}</h1>
+
+  <table class="positionen">
+    <thead>
+      <tr>
+        <th class="num">Pos.</th>
+        <th>Leistung</th>
+        <th class="num">Menge</th>
+        <th>Einheit</th>
+        <th class="num">Einzelpreis</th>
+        <th class="num">Betrag</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{POSITIONEN}}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5">Rechnungsbetrag</td>
+        <td class="num">{{SUMME}}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <p class="ust-hinweis">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).</p>
+
+  <p class="zahlung">Bitte überweisen Sie den Rechnungsbetrag von <strong>{{SUMME}}</strong> ohne Abzug
+    bis zum <strong>{{ZAHLUNGSZIEL}}</strong> auf das unten angegebene Konto.</p>
+
+  {{HINWEIS_BLOCK}}
+
+  <p class="gruss">Mit freundlichen Grüßen<br>{{UNTERSCHRIFT}}</p>
+
+  <footer class="fuss">
+    <div class="block">
+      <strong>{{FIRMA_NAME}}</strong><br>
+      {{FIRMA_STRASSE}}<br>
+      {{FIRMA_PLZ}} {{FIRMA_ORT}}
+    </div>
+    <div class="block">
+      {{FUSS_KONTAKT}}
+    </div>
+    <div class="block">
+      {{FUSS_BANK}}
+    </div>
+  </footer>
+
+</body>
+</html>

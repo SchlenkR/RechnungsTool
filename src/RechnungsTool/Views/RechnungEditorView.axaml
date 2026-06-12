@@ -1,0 +1,282 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RechnungsTool.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="900"
+             x:Class="RechnungsTool.Views.RechnungEditorView"
+             x:DataType="vm:RechnungEditorViewModel">
+
+    <DockPanel>
+
+        <!-- Kopfzeile: Titel + Ansicht-Umschalter + Aktionen -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,0,0,12">
+            <TextBlock Grid.Column="0" Text="{Binding Titel}"
+                       FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <ToggleButton Grid.Column="1" Margin="14,0,0,0" Padding="10,6"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding VorschauSichtbar}"
+                          ToolTip.Tip="Zwischen Eingabemaske und Vorschau umschalten">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ui:SymbolIcon Symbol="View" FontSize="15"/>
+                    <TextBlock Text="Vorschau"/>
+                </StackPanel>
+            </ToggleButton>
+            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
+                <!-- Aktionen im Normalmodus -->
+                <Button Classes="danger" Command="{Binding VerwerfenCommand}"
+                        IsVisible="{Binding VerwerfenSichtbar}"
+                        ToolTip.Tip="Neue Rechnung verwerfen (wurde noch nicht gespeichert)">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Cancel"/>
+                        <TextBlock Text="Verwerfen"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="danger" Command="{Binding LoeschenCommand}"
+                        IsVisible="{Binding LoeschenSichtbar}"
+                        ToolTip.Tip="In den Papierkorb verschieben">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Delete"/>
+                        <TextBlock Text="Löschen"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="danger" Command="{Binding AenderungenVerwerfenCommand}"
+                        IsVisible="{Binding AenderungenVerwerfenSichtbar}"
+                        ToolTip.Tip="Ungespeicherte Änderungen verwerfen und gespeicherten Stand wiederherstellen">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Undo"/>
+                        <TextBlock Text="Änderungen verwerfen"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="create" Command="{Binding AusVorlageErstellenCommand}"
+                        IsVisible="{Binding AusVorlageSichtbar}"
+                        ToolTip.Tip="Neue Rechnung mit diesen Daten als Vorlage erstellen">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Add"/>
+                        <TextBlock Text="In neue Rechnung"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="secondary" Command="{Binding FreigebenCommand}"
+                        IsVisible="{Binding FreigebenSichtbar}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Permissions"/>
+                        <TextBlock Text="Zum Editieren freigeben"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="secondary" Command="{Binding SpeichernCommand}"
+                        IsVisible="{Binding Editierbar}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Save"/>
+                        <TextBlock Text="Speichern"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="accent" Command="{Binding PdfExportierenCommand}"
+                        IsVisible="{Binding !NurLesen}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Download"/>
+                        <TextBlock Text="PDF erstellen"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Aktionen im Papierkorb (Read-Only) -->
+                <Button Classes="secondary" Command="{Binding WiederherstellenCommand}"
+                        IsVisible="{Binding NurLesen}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Undo"/>
+                        <TextBlock Text="Wiederherstellen"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="danger" Command="{Binding EndgueltigLoeschenCommand}"
+                        IsVisible="{Binding NurLesen}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:SymbolIcon Symbol="Delete"/>
+                        <TextBlock Text="Endgültig löschen"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Hinweisbanner für gesperrte Rechnungen -->
+        <ui:InfoBar DockPanel.Dock="Top"
+                    Margin="0,0,0,10"
+                    Severity="Warning"
+                    IsClosable="False"
+                    Title="Gesperrt"
+                    Message="Diese Rechnung wurde bereits als PDF gespeichert und ist gegen Änderungen gesperrt. Empfehlung: Rechnungskopie anlegen statt eine verschickte Rechnung zu ändern."
+                    IsOpen="{Binding FreigebenSichtbar}"/>
+
+        <!-- Statuszeile -->
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}"
+                   Classes="hint" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
+
+        <Panel>
+
+            <!-- Eingabemaske (exklusiv zur Vorschau) -->
+            <ScrollViewer IsVisible="{Binding !VorschauSichtbar}">
+                <StackPanel Spacing="12" Margin="0,0,4,0" IsEnabled="{Binding Editierbar}">
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="RECHNUNG" Classes="cardTitle"/>
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Rechnungsnummer" Classes="label"/>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="0">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <TextBox Text="{Binding Nummer}" Width="160"/>
+                                        <TextBlock Text="{Binding NummernHinweis}" Classes="hint"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Classes="feldFehler" Text="{Binding NummerFehler}"
+                                               IsVisible="{Binding NummerFehler, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    <TextBlock Classes="feldWarnung" Text="{Binding NummerWarnung}"
+                                               IsVisible="{Binding NummerWarnung, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Rechnungsdatum" Classes="label" Margin="0,8,0,0"/>
+                                <DatePicker Grid.Row="1" Grid.Column="1" SelectedDate="{Binding Datum}" Margin="0,8,0,0"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Leistungszeitraum" Classes="label" Margin="0,8,0,0"/>
+                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,8,0,0">
+                                    <TextBox Text="{Binding Leistungszeitraum}"
+                                             Watermark="z. B. Mai 2026 oder 01.05.–31.05.2026"/>
+                                    <TextBlock Classes="feldFehler" Text="{Binding LeistungszeitraumFehler}"
+                                               IsVisible="{Binding LeistungszeitraumFehler, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="EMPFÄNGER" Classes="cardTitle"/>
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name / Firma" Classes="label"/>
+                                <StackPanel Grid.Row="0" Grid.Column="1">
+                                    <TextBox Text="{Binding EmpfaengerName}"/>
+                                    <TextBlock Classes="feldFehler" Text="{Binding EmpfaengerNameFehler}"
+                                               IsVisible="{Binding EmpfaengerNameFehler, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Zusatz" Classes="label" Margin="0,8,0,0"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EmpfaengerZusatz}"
+                                         Watermark="optional, z. B. Ansprechpartner" Margin="0,8,0,0"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Straße" Classes="label" Margin="0,8,0,0"/>
+                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,8,0,0">
+                                    <TextBox Text="{Binding EmpfaengerStrasse}"/>
+                                    <TextBlock Classes="feldFehler" Text="{Binding EmpfaengerStrasseFehler}"
+                                               IsVisible="{Binding EmpfaengerStrasseFehler, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="PLZ / Ort" Classes="label" Margin="0,8,0,0"/>
+                                <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,8,0,0">
+                                    <Grid ColumnDefinitions="100,8,*">
+                                        <TextBox Grid.Column="0" Text="{Binding EmpfaengerPlz}"/>
+                                        <TextBox Grid.Column="2" Text="{Binding EmpfaengerOrt}"/>
+                                    </Grid>
+                                    <TextBlock Classes="feldFehler" Text="{Binding EmpfaengerPlzOrtFehler}"
+                                               IsVisible="{Binding EmpfaengerPlzOrtFehler, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="LEISTUNGSPOSITIONEN" Classes="cardTitle"/>
+                            <Grid ColumnDefinitions="32,*,60,64,80,92,32">
+                                <TextBlock Grid.Column="1" Text="Leistungstext" Classes="hint"/>
+                                <TextBlock Grid.Column="2" Text="Menge" Classes="hint" Margin="8,0,0,0"/>
+                                <TextBlock Grid.Column="3" Text="Einheit" Classes="hint" Margin="8,0,0,0"/>
+                                <TextBlock Grid.Column="4" Text="Preis €" Classes="hint" Margin="8,0,0,0"/>
+                                <TextBlock Grid.Column="5" Text="Betrag" Classes="hint" Margin="8,0,0,0"
+                                           HorizontalAlignment="Right"/>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding Positionen}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PositionViewModel">
+                                        <StackPanel Margin="0,0,0,8">
+                                            <Grid ColumnDefinitions="32,*,60,64,80,92,32">
+                                                <Button Grid.Column="0" Classes="ghost" Padding="6"
+                                                        VerticalAlignment="Center" Margin="0,0,6,0"
+                                                        ToolTip.Tip="Position kopieren (identische Position darunter einfügen)"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RechnungEditorViewModel)DataContext).PositionKopierenCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <ui:SymbolIcon Symbol="Copy" FontSize="14" Foreground="#0E8174"/>
+                                                </Button>
+                                                <TextBox Grid.Column="1" Text="{Binding Text}"
+                                                         TextWrapping="Wrap" AcceptsReturn="True"/>
+                                                <TextBox Grid.Column="2" Text="{Binding MengeText}" Margin="8,0,0,0"/>
+                                                <TextBox Grid.Column="3" Text="{Binding Einheit}" Margin="8,0,0,0"/>
+                                                <TextBox Grid.Column="4" Text="{Binding EinzelpreisText}" Margin="8,0,0,0"/>
+                                                <TextBlock Grid.Column="5" Text="{Binding BetragText}"
+                                                           VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                           Margin="8,0,4,0"/>
+                                                <Button Grid.Column="6" Classes="ghost" Padding="6"
+                                                        VerticalAlignment="Center"
+                                                        ToolTip.Tip="Position entfernen"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RechnungEditorViewModel)DataContext).PositionEntfernenCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <ui:SymbolIcon Symbol="Delete" FontSize="14" Foreground="#C42B1C"/>
+                                                </Button>
+                                            </Grid>
+                                            <TextBlock Classes="feldFehler" Text="{Binding Fehler}"
+                                                       IsVisible="{Binding Fehler, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Button Grid.Column="0" Classes="secondary" Command="{Binding PositionHinzufuegenCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <ui:SymbolIcon Symbol="Add" FontSize="14"/>
+                                        <TextBlock Text="Position"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Grid.Column="2" FontWeight="SemiBold" VerticalAlignment="Center" FontSize="14">
+                                    <Run Text="Rechnungsbetrag: "/><Run Text="{Binding SummeText}"/>
+                                </TextBlock>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="HINWEIS AUF DER RECHNUNG (OPTIONAL)" Classes="cardTitle"/>
+                            <TextBox Text="{Binding Hinweis}" AcceptsReturn="True" MinHeight="60" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Befunde ohne Feldbezug (Stammdaten, Allgemeines) -->
+                    <ItemsControl ItemsSource="{Binding UebrigeBefunde}" Margin="4,0,0,8">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BefundAnzeige">
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
+                                    <TextBlock Text="{Binding Symbol}" Foreground="{Binding Farbe}"/>
+                                    <TextBlock Text="{Binding Text}" Foreground="{Binding Farbe}"
+                                               TextWrapping="Wrap" FontSize="12"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Vorschau (DIN A4, exklusiv zur Eingabemaske) -->
+            <Border Classes="card" Padding="12"
+                    IsVisible="{Binding VorschauSichtbar}">
+                <Panel>
+                    <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                            BoxShadow="0 2 12 0 #30000000" Margin="8">
+                        <Image Source="{Binding VorschauBild}" Stretch="Uniform"/>
+                    </Border>
+                    <Border Background="#C0202020" CornerRadius="6" Padding="12,7"
+                            HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,16,0,0"
+                            IsVisible="{Binding VorschauStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="{Binding VorschauStatus}" Foreground="White" FontSize="12"/>
+                    </Border>
+                </Panel>
+            </Border>
+
+        </Panel>
+
+    </DockPanel>
+
+</UserControl>
