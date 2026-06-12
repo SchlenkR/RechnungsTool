@@ -180,47 +180,53 @@
                     <Border Classes="card">
                         <StackPanel Spacing="8">
                             <TextBlock Text="LEISTUNGSPOSITIONEN" Classes="cardTitle"/>
-                            <Grid ColumnDefinitions="32,*,60,64,80,92,32">
-                                <TextBlock Grid.Column="1" Text="Leistungstext" Classes="hint"/>
-                                <TextBlock Grid.Column="2" Text="Menge" Classes="hint" Margin="8,0,0,0"/>
-                                <TextBlock Grid.Column="3" Text="Einheit" Classes="hint" Margin="8,0,0,0"/>
-                                <TextBlock Grid.Column="4" Text="Preis €" Classes="hint" Margin="8,0,0,0"/>
-                                <TextBlock Grid.Column="5" Text="Betrag" Classes="hint" Margin="8,0,0,0"
-                                           HorizontalAlignment="Right"/>
-                            </Grid>
+                            <!-- Spaltenbreiten exakt wie in den Zeilen darunter (rechts verankert) -->
+                            <DockPanel>
+                                <Border DockPanel.Dock="Left" Width="26" Margin="0,0,6,0"/>
+                                <Border DockPanel.Dock="Right" Width="26"/>
+                                <TextBlock DockPanel.Dock="Right" Width="92" Margin="8,0,4,0"
+                                           Text="Betrag" Classes="hint" TextAlignment="Right"/>
+                                <TextBlock DockPanel.Dock="Right" Width="72" Margin="8,0,0,0"
+                                           Text="Preis €" Classes="hint"/>
+                                <TextBlock DockPanel.Dock="Right" Width="56" Margin="8,0,0,0"
+                                           Text="Einheit" Classes="hint"/>
+                                <TextBlock DockPanel.Dock="Right" Width="52" Margin="8,0,0,0"
+                                           Text="Menge" Classes="hint"/>
+                                <TextBlock Text="Leistungstext" Classes="hint"/>
+                            </DockPanel>
                             <ItemsControl ItemsSource="{Binding Positionen}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:PositionViewModel">
                                         <StackPanel Margin="0,0,0,8">
-                                            <!-- Alle Felder oben ausgerichtet, damit die Spalten auch bei
-                                                 mehrzeiligem Leistungstext sauber fluchten -->
-                                            <Grid ColumnDefinitions="32,*,60,64,80,92,32">
-                                                <Button Grid.Column="0" Classes="ghost" Padding="6"
+                                            <!-- Rechts verankerte Felder mit harten Breiten und Top-Ausrichtung,
+                                                 damit die Spalten in jeder Zeile exakt fluchten -->
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Left" Classes="ghost" Width="26" Padding="6"
                                                         VerticalAlignment="Top" Margin="0,2,6,0"
                                                         ToolTip.Tip="Position kopieren (identische Position darunter einfügen)"
                                                         Command="{Binding $parent[ItemsControl].((vm:RechnungEditorViewModel)DataContext).PositionKopierenCommand}"
                                                         CommandParameter="{Binding}">
                                                     <ui:SymbolIcon Symbol="Copy" FontSize="14" Foreground="#0E8174"/>
                                                 </Button>
-                                                <TextBox Grid.Column="1" Text="{Binding Text}"
-                                                         TextWrapping="Wrap" AcceptsReturn="True"/>
-                                                <TextBox Grid.Column="2" Text="{Binding MengeText}"
-                                                         VerticalAlignment="Top" Margin="8,0,0,0"/>
-                                                <TextBox Grid.Column="3" Text="{Binding Einheit}"
-                                                         VerticalAlignment="Top" Margin="8,0,0,0"/>
-                                                <TextBox Grid.Column="4" Text="{Binding EinzelpreisText}"
-                                                         VerticalAlignment="Top" Margin="8,0,0,0"/>
-                                                <TextBlock Grid.Column="5" Text="{Binding BetragText}"
-                                                           VerticalAlignment="Top" HorizontalAlignment="Right"
-                                                           Margin="8,8,4,0"/>
-                                                <Button Grid.Column="6" Classes="ghost" Padding="6"
+                                                <Button DockPanel.Dock="Right" Classes="ghost" Width="26" Padding="6"
                                                         VerticalAlignment="Top" Margin="0,2,0,0"
                                                         ToolTip.Tip="Position entfernen"
                                                         Command="{Binding $parent[ItemsControl].((vm:RechnungEditorViewModel)DataContext).PositionEntfernenCommand}"
                                                         CommandParameter="{Binding}">
                                                     <ui:SymbolIcon Symbol="Delete" FontSize="14" Foreground="#C42B1C"/>
                                                 </Button>
-                                            </Grid>
+                                                <TextBlock DockPanel.Dock="Right" Width="92" Margin="8,8,4,0"
+                                                           Text="{Binding BetragText}"
+                                                           TextAlignment="Right" VerticalAlignment="Top"/>
+                                                <TextBox DockPanel.Dock="Right" Width="72" Margin="8,0,0,0"
+                                                         Text="{Binding EinzelpreisText}" VerticalAlignment="Top"/>
+                                                <TextBox DockPanel.Dock="Right" Width="56" Margin="8,0,0,0"
+                                                         Text="{Binding Einheit}" VerticalAlignment="Top"/>
+                                                <TextBox DockPanel.Dock="Right" Width="52" Margin="8,0,0,0"
+                                                         Text="{Binding MengeText}" VerticalAlignment="Top"/>
+                                                <TextBox Text="{Binding Text}"
+                                                         TextWrapping="Wrap" AcceptsReturn="True"/>
+                                            </DockPanel>
                                             <TextBlock Classes="feldFehler" Text="{Binding Fehler}"
                                                        IsVisible="{Binding Fehler, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                         </StackPanel>
