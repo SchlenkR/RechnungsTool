@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RechnungsTool.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="320"
+             x:Class="RechnungsTool.Views.ChatView"
+             x:DataType="vm:ChatViewModel">
+    <DockPanel>
+
+        <!-- Kopfzeile -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="12,8,8,6">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="&gt;_" FontFamily="Menlo,Monaco,monospace" FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+                <TextBlock Text="Claude" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+            <Button Grid.Column="1" Classes="ghost" Padding="8,4"
+                    ToolTip.Tip="Unterhaltung neu starten (Verlauf wird gelöscht)"
+                    Command="{Binding NeustartenCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <ui:SymbolIcon Symbol="Refresh" FontSize="14"/>
+                    <TextBlock Text="Neu starten"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Eingabe als eigenes Panel -->
+        <Border DockPanel.Dock="Bottom" Margin="12,6,12,12"
+                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="6,4">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0" Name="EingabeFeld"
+                         Background="Transparent" BorderThickness="0"
+                         Text="{Binding Eingabe}"
+                         Watermark="Nachricht an Claude … (Enter sendet, Shift+Enter = neue Zeile)"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MaxHeight="120"
+                         VerticalContentAlignment="Center"/>
+                <Button Grid.Column="1" Classes="accent" Margin="8,0,0,0"
+                        Command="{Binding SendenCommand}"
+                        ToolTip.Tip="Senden (Enter)">
+                    <ui:SymbolIcon Symbol="Send" FontSize="16"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Verlauf -->
+        <ScrollViewer Name="Verlauf" Margin="6,0,6,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+            <ItemsControl ItemsSource="{Binding Nachrichten}" Margin="6,2">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ChatNachricht">
+                        <Grid Margin="0,3">
+                            <!-- Eigene Nachricht -->
+                            <Border IsVisible="{Binding IstIch}"
+                                    HorizontalAlignment="Right" MaxWidth="560"
+                                    Background="#E3E8FB" CornerRadius="12,12,2,12" Padding="11,8">
+                                <SelectableTextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
+                            </Border>
+
+                            <!-- Claude-Antwort -->
+                            <Border IsVisible="{Binding IstClaude}"
+                                    HorizontalAlignment="Left" MaxWidth="600"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1" CornerRadius="12,12,12,2" Padding="11,8">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="Claude" FontSize="11" FontWeight="SemiBold"
+                                               Classes="hint"/>
+                                    <SelectableTextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- System-/Aktionshinweis -->
+                            <TextBlock IsVisible="{Binding IstSystem}"
+                                       Text="{Binding Text}" TextWrapping="Wrap"
+                                       HorizontalAlignment="Center" TextAlignment="Center"
+                                       Classes="hint" FontSize="12" Margin="24,3"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- „arbeitet…“-Indikator: sichtbar, solange Claude arbeitet ohne gerade zu tippen -->
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,4,0,8"
+                        IsVisible="{Binding Arbeitet}">
+                <ui:ProgressRing Width="16" Height="16" IsActive="{Binding Arbeitet}"/>
+                <TextBlock Text="Claude arbeitet…" Classes="hint" VerticalAlignment="Center"/>
+            </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+    </DockPanel>
+</UserControl>

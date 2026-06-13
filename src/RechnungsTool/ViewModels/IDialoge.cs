@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
 
 namespace RechnungsTool.ViewModels;
 
@@ -36,4 +37,5 @@ public interface IDialoge
     Task EinstellungenAnzeigenAsync(EinstellungenViewModel einstellungen);
     Task StammdatenAnzeigenAsync(StammdatenViewModel stammdaten);
     Task AuswertungAnzeigenAsync(AuswertungViewModel auswertung);
+    Task VorschauAnzeigenAsync(Bitmap bild);
 }

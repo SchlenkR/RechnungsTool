@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        x:Class="RechnungsTool.Views.VorschauFenster"
+        Title="Vorschau"
+        Width="920" Height="1040"
+        WindowStartupLocation="CenterOwner"
+        Background="#2B2B2B">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#1E1E1E" Padding="12,8">
+            <Grid ColumnDefinitions="*,Auto,*">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                            HorizontalAlignment="Center">
+                    <Button Name="ZoomAus" Width="40" ToolTip.Tip="Verkleinern" Content="−"/>
+                    <Button Name="ZoomEinpassen" Content="Einpassen"/>
+                    <Button Name="ZoomEin" Width="40" ToolTip.Tip="Vergrößern" Content="+"/>
+                    <TextBlock Name="ZoomText" Text="100 %" Foreground="#D4D4D4"
+                               VerticalAlignment="Center" Width="56" TextAlignment="Center"/>
+                </StackPanel>
+                <Button Grid.Column="2" Name="SchliessenBtn" Content="Schließen"
+                        HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <Border Name="Viewport" ClipToBounds="True" Background="#2B2B2B" Cursor="SizeAll">
+            <Image Name="Bild" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Image.RenderTransform>
+                    <MatrixTransform/>
+                </Image.RenderTransform>
+                <Image.GestureRecognizers>
+                    <PinchGestureRecognizer/>
+                </Image.GestureRecognizers>
+            </Image>
+        </Border>
+    </DockPanel>
+</Window>

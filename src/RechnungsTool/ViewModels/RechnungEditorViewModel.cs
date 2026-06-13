@@ -72,6 +72,18 @@ public partial class RechnungEditorViewModel : ViewModelBase
     /// <summary>Nach PDF-Export gesperrt; Freigabe nur über den geführten Dialog.</summary>
     [ObservableProperty] private bool gesperrt;
 
+    /// <summary>
+    /// Die zugehörige Datei wurde extern geändert, während hier ungespeicherte
+    /// Eingaben offen sind (Konflikt). Der Plattenstand liegt in <see cref="_externerStand"/>.
+    /// </summary>
+    [ObservableProperty] private bool externGeaendert;
+
+    /// <summary>Die zugehörige Datei wurde extern gelöscht; Speichern legt sie neu an.</summary>
+    [ObservableProperty] private bool externGeloescht;
+
+    /// <summary>Plattenstand bei Konflikt (siehe <see cref="ExternGeaendert"/>).</summary>
+    Rechnung? _externerStand;
+
     // In-place-Validierung: ein Text pro Feld, leer = valide
     [ObservableProperty] private string nummerFehler = "";
     [ObservableProperty] private string nummerWarnung = "";
@@ -305,6 +317,9 @@ public partial class RechnungEditorViewModel : ViewModelBase
         _pfad = XmlStore.RechnungSpeichern(_main.DatenOrdner, modell, _pfad);
         _ursprünglicheNummer = modell.Nummer;
         _gespeicherteXml = XmlStore.AlsXml(modell);
+        _externerStand = null;
+        ExternGeaendert = false;
+        ExternGeloescht = false;
         OnPropertyChanged(nameof(Titel));
         OnPropertyChanged(nameof(LoeschenSichtbar));
         OnPropertyChanged(nameof(VerwerfenSichtbar));
@@ -315,6 +330,101 @@ public partial class RechnungEditorViewModel : ViewModelBase
 
     /// <summary>Validierung erneut anstoßen (z. B. nach Stammdaten-Änderung).</summary>
     public void NeuValidieren() => Aktualisieren();
+
+    /// <summary>
+    /// Meldet dem Editor den aktuellen Stand auf der Platte (aus dem inkrementellen Sync).
+    /// Nicht-dirty Editoren ziehen still nach; dirty Editoren behalten ihre Eingaben und
+    /// zeigen einen Konflikt-Hinweis – es wird nie ungefragt überschrieben. So bleibt die
+    /// Anwendung konsistent, auch wenn parallel (z. B. durch die KI) in dieselbe Datei
+    /// geschrieben wird.
+    /// </summary>
+    public void ExternerStand(Rechnung? diskRechnung)
+    {
+        if (NurLesen)
+            return;
+
+        if (diskRechnung is null)
+        {
+            ExternGeaendert = false;
+            _externerStand = null;
+            ExternGeloescht = true;
+            return;
+        }
+
+        ExternGeloescht = false;
+        var diskXml = XmlStore.AlsXml(diskRechnung);
+        if (diskXml == _gespeicherteXml)
+        {
+            ExternGeaendert = false;
+            _externerStand = null;
+            return;
+        }
+
+        if (IstDirty)
+        {
+            _externerStand = diskRechnung;
+            ExternGeaendert = true;
+        }
+        else
+        {
+            FelderUebernehmen(diskRechnung);
+            _gespeicherteXml = diskXml;
+            _ursprünglicheNummer = _pfad is null ? null : diskRechnung.Nummer;
+            _externerStand = null;
+            ExternGeaendert = false;
+            OnPropertyChanged(nameof(Titel));
+            Aktualisieren();
+        }
+    }
+
+    /// <summary>Konflikt auflösen: den externen Plattenstand übernehmen (eigene Eingaben verwerfen).</summary>
+    [RelayCommand]
+    void ExternenStandUebernehmen()
+    {
+        if (_externerStand is null)
+            return;
+        FelderUebernehmen(_externerStand);
+        _gespeicherteXml = XmlStore.AlsXml(_externerStand);
+        _ursprünglicheNummer = _pfad is null ? null : _externerStand.Nummer;
+        _externerStand = null;
+        ExternGeaendert = false;
+        OnPropertyChanged(nameof(Titel));
+        Aktualisieren();
+        Status = "Externer Stand übernommen.";
+    }
+
+    /// <summary>Konflikt-Hinweis ausblenden und mit den eigenen Eingaben weiterarbeiten.</summary>
+    [RelayCommand]
+    void EigenenStandBehalten()
+    {
+        _externerStand = null;
+        ExternGeaendert = false;
+        Status = "Eigene Eingaben behalten – Speichern überschreibt den externen Stand.";
+    }
+
+    /// <summary>Übernimmt die Feldwerte einer Rechnung in den Editor (ohne Basis/Pfad zu berühren).</summary>
+    void FelderUebernehmen(Rechnung r)
+    {
+        _initialisiert = false;
+        Nummer = r.Nummer;
+        Datum = new DateTimeOffset(r.Datum);
+        Leistungszeitraum = r.Leistungszeitraum;
+        EmpfaengerName = r.Empfaenger.Name;
+        EmpfaengerZusatz = r.Empfaenger.Zusatz;
+        EmpfaengerStrasse = r.Empfaenger.Strasse;
+        EmpfaengerPlz = r.Empfaenger.Plz;
+        EmpfaengerOrt = r.Empfaenger.Ort;
+        Hinweis = r.Hinweis;
+        Gesperrt = r.Gesperrt;
+
+        foreach (var position in Positionen)
+            position.Geaendert -= Aktualisieren;
+        Positionen.Clear();
+        foreach (var p in r.Positionen)
+            PositionAnhaengen(new PositionViewModel(p));
+
+        _initialisiert = true;
+    }
 
     bool KannPdfErstellen() => !NurLesen && !HatFehler;
 
@@ -415,26 +525,7 @@ public partial class RechnungEditorViewModel : ViewModelBase
         if (!ok)
             return;
 
-        var gespeichert = XmlStore.RechnungAusXml(_gespeicherteXml);
-        _initialisiert = false;
-        Nummer = gespeichert.Nummer;
-        Datum = new DateTimeOffset(gespeichert.Datum);
-        Leistungszeitraum = gespeichert.Leistungszeitraum;
-        EmpfaengerName = gespeichert.Empfaenger.Name;
-        EmpfaengerZusatz = gespeichert.Empfaenger.Zusatz;
-        EmpfaengerStrasse = gespeichert.Empfaenger.Strasse;
-        EmpfaengerPlz = gespeichert.Empfaenger.Plz;
-        EmpfaengerOrt = gespeichert.Empfaenger.Ort;
-        Hinweis = gespeichert.Hinweis;
-        Gesperrt = gespeichert.Gesperrt;
-
-        foreach (var position in Positionen)
-            position.Geaendert -= Aktualisieren;
-        Positionen.Clear();
-        foreach (var p in gespeichert.Positionen)
-            PositionAnhaengen(new PositionViewModel(p));
-
-        _initialisiert = true;
+        FelderUebernehmen(XmlStore.RechnungAusXml(_gespeicherteXml));
         Aktualisieren();
         Status = "Änderungen verworfen – zuletzt gespeicherter Stand wiederhergestellt.";
     }
@@ -466,6 +557,24 @@ public partial class RechnungEditorViewModel : ViewModelBase
     {
         if (_pfad is not null && NurLesen)
             await _main.EndgueltigLoeschenAsync(_pfad);
+    }
+
+    /// <summary>Öffnet die DIN-A4-Vorschau in einem zoombaren, modalen Fenster.</summary>
+    [RelayCommand]
+    async Task VorschauOeffnenAsync()
+    {
+        if (_main.Stammdaten is null)
+        {
+            await _main.Dialoge.InfoAsync("Keine Vorschau möglich",
+                "Bitte zuerst die Stammdaten pflegen.");
+            return;
+        }
+
+        await VorschauRendernAsync();
+        if (VorschauBild is not null)
+            await _main.Dialoge.VorschauAnzeigenAsync(VorschauBild);
+        else if (VorschauStatus.Length > 0)
+            await _main.Dialoge.InfoAsync("Vorschau", VorschauStatus);
     }
 
     async Task VorschauRendernAsync()

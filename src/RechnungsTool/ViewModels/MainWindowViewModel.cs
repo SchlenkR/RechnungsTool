@@ -28,6 +28,9 @@ public partial class ListenEintrag : ObservableObject
     /// <summary>Offener Editor dieser Rechnung (Quelle des Dirty-Flags), null wenn nicht geöffnet.</summary>
     [ObservableProperty] private RechnungEditorViewModel? editor;
 
+    /// <summary>Kurzzeitig nach einer extern hinzugekommenen Rechnung gesetzt (Hervorhebung).</summary>
+    [ObservableProperty] private bool istNeu;
+
     /// <summary>Zusammenfassung der Validierungsfehler, null wenn valide.</summary>
     public string? Problem { get; init; }
 
@@ -200,7 +203,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // Externe Änderungen im Datenordner
     readonly OrdnerWaechter _waechter = new();
-    bool _externDialogAktiv;
+
+    // Dezente Meldung über extern hinzugekommene Rechnungen
+    [ObservableProperty] private bool neueRechnungenSichtbar;
+    [ObservableProperty] private string neueRechnungenHinweis = "";
 
     // Gesamtbestand; die sichtbaren Collections entstehen daraus per Suche + Jahresgruppierung
     readonly List<ListenEintrag> _alleEintraege = new();
@@ -213,6 +219,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public int AnzahlRechnungen => _alleEintraege.Count;
 
     public Stammdaten? Stammdaten { get; private set; }
+
+    /// <summary>Eingebetteter Claude-Assistent (headless), immer sichtbar unten.</summary>
+    public ChatViewModel Chat { get; }
+
     public PdfDienst Pdf { get; } = new();
     public IDialoge Dialoge { get; }
     public string DatenOrdner => _config.DatenOrdnerAbsolut;
@@ -232,6 +242,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         Dialoge = dialoge;
         _config = AppConfig.Laden();
+        Chat = new ChatViewModel(_config.DatenOrdnerAbsolut);
         ListeAktualisieren(null);
 
         // Ohne Stammdaten direkt den Stammdaten-Dialog öffnen (nach Fensteraufbau),
@@ -247,38 +258,62 @@ public partial class MainWindowViewModel : ViewModelBase
         _ = UpdatePruefenAsync();
 
         _waechter.ExterneAenderung += () =>
-            Avalonia.Threading.Dispatcher.UIThread.Post(() => _ = ExterneAenderungMeldenAsync());
+            Avalonia.Threading.Dispatcher.UIThread.Post(ExterneAenderungUebernehmen);
         _waechter.Ueberwachen(DatenOrdner);
     }
 
-    /// <summary>Externe Änderung: modaler Dialog, danach wird zwingend neu geladen.</summary>
-    async Task ExterneAenderungMeldenAsync()
+    /// <summary>
+    /// Externe Änderung implizit übernehmen – ohne Dialog, ohne Verlust offener Eingaben.
+    /// Offene, nicht geänderte Editoren ziehen still auf den Plattenstand nach; geänderte
+    /// Editoren behalten ihre Eingaben und zeigen bei Konflikt einen Hinweis. Neu
+    /// hinzugekommene Rechnungen werden kurz hervorgehoben.
+    /// </summary>
+    void ExterneAenderungUebernehmen()
     {
-        if (_externDialogAktiv)
+        var inhalt = XmlStore.OrdnerLaden(DatenOrdner);
+
+        // 1) Offene Editoren konfliktsicher mit dem Plattenstand abgleichen
+        var diskNachPfad = inhalt.Rechnungen
+            .Where(d => d.Rechnung is not null)
+            .ToDictionary(d => d.Pfad, d => d.Rechnung!, StringComparer.Ordinal);
+        foreach (var (pfad, editor) in _offeneEditoren.ToList())
+            editor.ExternerStand(diskNachPfad.GetValueOrDefault(pfad));
+
+        // 2) Bisherige Pfade merken, um neu Hinzugekommenes zu erkennen
+        var altePfade = _alleEintraege
+            .Where(e => e.Datei is not null)
+            .Select(e => e.Datei!.Pfad)
+            .ToHashSet(StringComparer.Ordinal);
+
+        // 3) Liste neu aufbauen; offene Editoren und die aktuelle Auswahl bleiben erhalten
+        ListeAktualisieren(null, inhalt);
+
+        // 4) Neu hinzugekommene, lesbare Rechnungen kurz hervorheben und dezent melden
+        var neue = _alleEintraege
+            .Where(e => e.Datei is { HatFehler: false } d && !altePfade.Contains(d.Pfad))
+            .ToList();
+        NeuHervorheben(neue);
+    }
+
+    void NeuHervorheben(List<ListenEintrag> neue)
+    {
+        if (neue.Count == 0)
             return;
 
-        _externDialogAktiv = true;
-        try
-        {
-            var text = "Der Datenordner wurde außerhalb der Anwendung geändert. " +
-                       "Die Anwendung wird neu geladen.";
-            if (HatUngespeicherte)
-                text += "\n\nUngespeicherte Änderungen gehen dabei verloren.";
+        foreach (var eintrag in neue)
+            eintrag.IstNeu = true;
 
-            try
-            {
-                await Dialoge.InfoAsync("Daten geändert", text, "Neu laden");
-            }
-            catch
-            {
-                // z. B. wenn bereits ein anderer Dialog offen ist – trotzdem neu laden
-            }
-            NeuLadenErzwingen();
-        }
-        finally
+        NeueRechnungenHinweis = neue.Count == 1
+            ? $"Neue Rechnung hinzugekommen: {neue[0].Titel}"
+            : $"{neue.Count} neue Rechnungen hinzugekommen.";
+        NeueRechnungenSichtbar = true;
+
+        Avalonia.Threading.DispatcherTimer.RunOnce(() =>
         {
-            _externDialogAktiv = false;
-        }
+            foreach (var eintrag in neue)
+                eintrag.IstNeu = false;
+            NeueRechnungenSichtbar = false;
+        }, TimeSpan.FromSeconds(5));
     }
 
     // --- Over-the-air-Update ------------------------------------------------
@@ -329,9 +364,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // --- Übersicht --------------------------------------------------------
 
-    public void ListeAktualisieren(string? auswaehlenPfad)
+    public void ListeAktualisieren(string? auswaehlenPfad, XmlStore.OrdnerInhalt? vorgeladen = null)
     {
-        var inhalt = XmlStore.OrdnerLaden(DatenOrdner);
+        var inhalt = vorgeladen ?? XmlStore.OrdnerLaden(DatenOrdner);
         Stammdaten = inhalt.Stammdaten;
 
         var warnungen = new List<string>();
@@ -343,10 +378,13 @@ public partial class MainWindowViewModel : ViewModelBase
                           + " (erlaubt sind nur stammdaten.xml und rechnung-*.xml)");
         OrdnerWarnung = warnungen.Count > 0 ? string.Join("\n", warnungen) : null;
 
-        // Editoren verschwundener Dateien (gelöscht, verschoben, Ordnerwechsel) verwerfen
+        // Editoren verschwundener Dateien (gelöscht, verschoben, Ordnerwechsel) verwerfen –
+        // außer sie haben ungespeicherte Änderungen. Die bleiben erhalten (mit Hinweis
+        // „extern gelöscht“) und legen die Datei beim Speichern neu an, statt sie zu verlieren.
         var vorhandenePfade = inhalt.Rechnungen.Select(d => d.Pfad).ToHashSet();
         foreach (var pfad in _offeneEditoren.Keys.Where(p => !vorhandenePfade.Contains(p)).ToList())
-            _offeneEditoren.Remove(pfad);
+            if (!_offeneEditoren[pfad].IstDirty)
+                _offeneEditoren.Remove(pfad);
 
         var alleNummern = AlleNummern(inhalt);
 
@@ -899,5 +937,6 @@ public partial class MainWindowViewModel : ViewModelBase
         public Task EinstellungenAnzeigenAsync(EinstellungenViewModel einstellungen) => Task.CompletedTask;
         public Task StammdatenAnzeigenAsync(StammdatenViewModel stammdaten) => Task.CompletedTask;
         public Task AuswertungAnzeigenAsync(AuswertungViewModel auswertung) => Task.CompletedTask;
+        public Task VorschauAnzeigenAsync(Avalonia.Media.Imaging.Bitmap bild) => Task.CompletedTask;
     }
 }

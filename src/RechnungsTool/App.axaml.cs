@@ -5,6 +5,7 @@ using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using CommunityToolkit.Mvvm.Input;
 using RechnungsTool.ViewModels;
 using RechnungsTool.Views;
 
@@ -30,16 +31,40 @@ public partial class App : Application
                 DataContext = viewModel,
             };
 
-            // Menüleisten-Eintrag (macOS): Anwendung neu laden mit Cmd+R
+            // Eigenes App-Menü (macOS): ersetzt das Default-Menü inkl. „About Avalonia“.
             NativeMenu.SetMenu(this, new NativeMenu
             {
                 Items =
                 {
-                    new NativeMenuItem("Neu laden")
+                    new NativeMenuItem("RechnungsTool")
                     {
-                        Command = viewModel.VollNeuLadenCommand,
-                        Gesture = new Avalonia.Input.KeyGesture(
-                            Avalonia.Input.Key.R, Avalonia.Input.KeyModifiers.Meta),
+                        Menu = new NativeMenu
+                        {
+                            Items =
+                            {
+                                new NativeMenuItem("RechnungsTool beenden")
+                                {
+                                    Command = new RelayCommand(() => desktop.TryShutdown()),
+                                    Gesture = new Avalonia.Input.KeyGesture(
+                                        Avalonia.Input.Key.Q, Avalonia.Input.KeyModifiers.Meta),
+                                },
+                            },
+                        },
+                    },
+                    new NativeMenuItem("Ablage")
+                    {
+                        Menu = new NativeMenu
+                        {
+                            Items =
+                            {
+                                new NativeMenuItem("Neu laden")
+                                {
+                                    Command = viewModel.VollNeuLadenCommand,
+                                    Gesture = new Avalonia.Input.KeyGesture(
+                                        Avalonia.Input.Key.R, Avalonia.Input.KeyModifiers.Meta),
+                                },
+                            },
+                        },
                     },
                 },
             });
