@@ -154,7 +154,7 @@
 
         <!-- Eingabemaske -->
         <ScrollViewer>
-                <StackPanel Spacing="24" Margin="0,0,4,0" IsEnabled="{Binding Editierbar}">
+                <StackPanel Spacing="24" Margin="0,0,18,0" IsEnabled="{Binding Editierbar}">
 
                     <StackPanel Spacing="8">
                             <TextBlock Text="RECHNUNG" Classes="section"/>

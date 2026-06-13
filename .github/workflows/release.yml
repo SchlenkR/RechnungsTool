@@ -41,6 +41,8 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Determine version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             # Manuell getaggt: Version aus dem Tag
@@ -68,14 +70,23 @@ jobs:
           echo "APP_VERSION=${TAG#v}" >> "$GITHUB_ENV"
           echo "Version: $TAG"
 
+          # Dedup: existiert das Release schon (z. B. lokal per build/release-macos.sh
+          # erstellt), überspringt die CI alles Weitere – keine Doppel-Releases.
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "SKIP_RELEASE=true" >> "$GITHUB_ENV"
+            echo "Release $TAG existiert bereits – CI überspringt."
+          fi
+
       - name: Publish (Apple Silicon)
+        if: env.SKIP_RELEASE != 'true'
         run: build/publish-macos.sh osx-arm64 "$APP_VERSION"
 
       - name: Publish (Intel)
+        if: env.SKIP_RELEASE != 'true'
         run: build/publish-macos.sh osx-x64 "$APP_VERSION"
 
       - name: Import Developer ID certificate
-        if: env.SIGNING_ENABLED == 'true'
+        if: env.SIGNING_ENABLED == 'true' && env.SKIP_RELEASE != 'true'
         env:
           CERT_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
           CERT_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
@@ -90,7 +101,7 @@ jobs:
           rm /tmp/cert.p12
 
       - name: Sign, build DMGs and notarize
-        if: env.SIGNING_ENABLED == 'true'
+        if: env.SIGNING_ENABLED == 'true' && env.SKIP_RELEASE != 'true'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
@@ -123,7 +134,7 @@ jobs:
           done
 
       - name: Zip app bundles (unsigned fallback)
-        if: env.SIGNING_ENABLED != 'true'
+        if: env.SIGNING_ENABLED != 'true' && env.SKIP_RELEASE != 'true'
         run: |
           ditto -c -k --sequesterRsrc --keepParent dist/osx-arm64/RechnungsTool.app "dist/RechnungsTool-${RELEASE_TAG}-macos-arm64.zip"
           ditto -c -k --sequesterRsrc --keepParent dist/osx-x64/RechnungsTool.app   "dist/RechnungsTool-${RELEASE_TAG}-macos-x64.zip"

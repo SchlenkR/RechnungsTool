@@ -63,15 +63,8 @@ public class Dialoge : IDialoge
     public Task AuswertungAnzeigenAsync(AuswertungViewModel auswertung) =>
         GrossenDialogZeigenAsync("Auswertung", new AuswertungView { DataContext = auswertung });
 
-    public async Task VorschauAnzeigenAsync(Avalonia.Media.Imaging.Bitmap bild)
-    {
-        var fenster = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        var dialog = new VorschauFenster(bild);
-        if (fenster is not null)
-            await dialog.ShowDialog(fenster);
-        else
-            dialog.Show();
-    }
+    public Task VorschauAnzeigenAsync(Avalonia.Media.Imaging.Bitmap bild) =>
+        GrossenDialogZeigenAsync("Vorschau", new VorschauView(bild));
 
     /// <summary>
     /// Modaler Dialog, maximiert mit 80 px Abstand zu allen Fensterkanten.

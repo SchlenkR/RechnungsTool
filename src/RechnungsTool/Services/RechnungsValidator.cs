@@ -63,13 +63,9 @@ public static class RechnungsValidator
                 Warnung(RechnungsFeld.Nummer, $"Nummer ist nicht fortlaufend – erwartet wäre „{erwarteteNummer}“.");
         }
 
-        // Empfänger (§ 14 Abs. 4 Nr. 1 UStG)
+        // Empfänger: nur der Name ist Pflicht; Straße/PLZ/Ort sind optional.
         if (r.Empfaenger.Name.Trim().Length == 0)
             Fehler(RechnungsFeld.EmpfaengerName, "Name fehlt (Pflichtangabe, § 14 UStG).");
-        if (r.Empfaenger.Strasse.Trim().Length == 0)
-            Fehler(RechnungsFeld.EmpfaengerStrasse, "Straße fehlt (Pflichtangabe, § 14 UStG).");
-        if (r.Empfaenger.Plz.Trim().Length == 0 || r.Empfaenger.Ort.Trim().Length == 0)
-            Fehler(RechnungsFeld.EmpfaengerPlzOrt, "PLZ/Ort fehlt (Pflichtangabe, § 14 UStG).");
 
         // Leistungszeitpunkt (§ 14 Abs. 4 Nr. 6 UStG)
         if (r.Leistungszeitraum.Trim().Length == 0)

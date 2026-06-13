@@ -9,13 +9,23 @@
              x:DataType="vm:ChatViewModel">
     <DockPanel>
 
-        <!-- Kopfzeile -->
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="12,8,8,6">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <TextBlock Text="&gt;_" FontFamily="Menlo,Monaco,monospace" FontWeight="Bold"
-                           VerticalAlignment="Center"/>
-                <TextBlock Text="Claude" FontWeight="SemiBold" VerticalAlignment="Center"/>
-            </StackPanel>
+        <!-- Kopfzeile: Klick auf „Claude“ klappt den Assistenten ein/aus -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="10,8,8,6">
+            <Button Grid.Column="0" Classes="ghost" Padding="6,3" HorizontalAlignment="Left"
+                    Command="{Binding MinimierenUmschaltenCommand}"
+                    ToolTip.Tip="Assistent ein-/ausklappen">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="&gt;_" FontFamily="Menlo,Monaco,monospace" FontWeight="Bold"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="Claude" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <ui:SymbolIcon Symbol="ChevronDown" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   IsVisible="{Binding !Minimiert}"/>
+                    <ui:SymbolIcon Symbol="ChevronUp" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   IsVisible="{Binding Minimiert}"/>
+                </StackPanel>
+            </Button>
             <Button Grid.Column="1" Classes="ghost" Padding="8,4"
                     ToolTip.Tip="Unterhaltung neu starten (Verlauf wird gelöscht)"
                     Command="{Binding NeustartenCommand}">
@@ -26,14 +36,14 @@
             </Button>
         </Grid>
 
-        <!-- Eingabe als eigenes Panel -->
-        <Border DockPanel.Dock="Bottom" Margin="12,6,12,12"
-                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
-                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="12" Padding="6,4">
+        <!-- Eingabe: moderne, runde Box mit Schlagschatten -->
+        <Border DockPanel.Dock="Bottom" Margin="14,8,14,14"
+                Background="#FFFFFF" CornerRadius="22"
+                BoxShadow="0 3 16 0 #2A000000" Padding="8,5,7,5">
             <Grid ColumnDefinitions="*,Auto">
                 <TextBox Grid.Column="0" Name="EingabeFeld"
                          Background="Transparent" BorderThickness="0"
+                         Padding="8,0,0,0"
                          Text="{Binding Eingabe}"
                          Watermark="Nachricht an Claude … (Enter sendet, Shift+Enter = neue Zeile)"
                          AcceptsReturn="True"
@@ -41,6 +51,8 @@
                          MaxHeight="120"
                          VerticalContentAlignment="Center"/>
                 <Button Grid.Column="1" Classes="accent" Margin="8,0,0,0"
+                        Width="38" Height="38" CornerRadius="19" Padding="0"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         Command="{Binding SendenCommand}"
                         ToolTip.Tip="Senden (Enter)">
                     <ui:SymbolIcon Symbol="Send" FontSize="16"/>
@@ -48,8 +60,9 @@
             </Grid>
         </Border>
 
-        <!-- Verlauf -->
-        <ScrollViewer Name="Verlauf" Margin="6,0,6,0" VerticalScrollBarVisibility="Auto">
+        <!-- Verlauf (beim Einklappen ausgeblendet) -->
+        <ScrollViewer Name="Verlauf" Margin="6,0,6,0" VerticalScrollBarVisibility="Auto"
+                      IsVisible="{Binding !Minimiert}">
             <StackPanel>
             <ItemsControl ItemsSource="{Binding Nachrichten}" Margin="6,2">
                 <ItemsControl.ItemTemplate>

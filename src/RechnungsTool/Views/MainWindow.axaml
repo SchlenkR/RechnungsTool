@@ -38,30 +38,34 @@
             <Setter Property="(Grid.ColumnSpan)" Value="2"/>
         </Style>
 
-        <!-- Dezent fließender KI-Gradient (Akzentleiste über dem Assistenten) -->
+        <!-- Bunt fließender KI-Gradient (Akzentleiste über dem Assistenten) -->
         <Style Selector="Rectangle.kiFluss">
             <Style.Animations>
-                <Animation Duration="0:0:14" IterationCount="INFINITE"
+                <Animation Duration="0:0:18" IterationCount="INFINITE"
                            PlaybackDirection="Alternate" Easing="SineEaseInOut">
                     <KeyFrame Cue="0%">
                         <Setter Property="(TranslateTransform.X)" Value="0"/>
                     </KeyFrame>
                     <KeyFrame Cue="100%">
-                        <Setter Property="(TranslateTransform.X)" Value="-1200"/>
+                        <Setter Property="(TranslateTransform.X)" Value="-1600"/>
                     </KeyFrame>
                 </Animation>
             </Style.Animations>
         </Style>
     </Window.Styles>
 
+    <LayoutTransformControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <LayoutTransformControl.LayoutTransform>
+            <!-- Gesamte Anwendung 30 % kleiner -->
+            <ScaleTransform ScaleX="0.7" ScaleY="0.7"/>
+        </LayoutTransformControl.LayoutTransform>
     <DockPanel>
 
-        <!-- Kopfleiste: farblich abgesetzt, mit Hairline und Schlagschatten über dem Inhalt -->
-        <Border DockPanel.Dock="Top" Padding="20,12" ZIndex="1"
+        <!-- Kopfleiste: weiß abgesetzt mit Hairline -->
+        <Border DockPanel.Dock="Top" Padding="20,12"
                 Background="#FFFFFF"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                BorderThickness="0,0,0,1"
-                BoxShadow="0 6 20 0 #30000000">
+                BorderThickness="0,0,0,1">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
                     <ui:SymbolIcon Symbol="Document" FontSize="20" VerticalAlignment="Center"/>
@@ -101,6 +105,16 @@
             </Grid>
         </Border>
 
+        <!-- Schlagschatten direkt unter dem Header (zuverlässig sichtbar, anders als BoxShadow im DockPanel) -->
+        <Rectangle DockPanel.Dock="Top" Height="10" IsHitTestVisible="False">
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Color="#33000000" Offset="0"/>
+                    <GradientStop Color="#00000000" Offset="1"/>
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+
         <!-- Statuszeile unten -->
         <Border DockPanel.Dock="Bottom" Padding="20,5">
             <TextBlock Text="{Binding StatusZeile}" Classes="hint"/>
@@ -139,21 +153,22 @@
                     IsOpen="{Binding NeueRechnungenSichtbar, Mode=TwoWay}"/>
 
         <!-- Eingebetteter Claude-Assistent: full-width Footer mit fließender KI-Gradientleiste -->
-        <Border DockPanel.Dock="Bottom" Height="340"
+        <Border DockPanel.Dock="Bottom" Height="{Binding Chat.FooterHoehe}"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0,1,0,0"
                 BoxShadow="0 -3 16 0 #22000000">
             <DockPanel>
-                <Border DockPanel.Dock="Top" Height="3" ClipToBounds="True">
-                    <Rectangle Classes="kiFluss" Width="2800" Height="3" HorizontalAlignment="Left">
+                <Border DockPanel.Dock="Top" Height="4" ClipToBounds="True">
+                    <Rectangle Classes="kiFluss" Width="3200" Height="4" HorizontalAlignment="Left">
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
-                                <GradientStop Color="#06B6D4" Offset="0"/>
-                                <GradientStop Color="#3B82F6" Offset="0.25"/>
-                                <GradientStop Color="#8B5CF6" Offset="0.5"/>
-                                <GradientStop Color="#3B82F6" Offset="0.75"/>
-                                <GradientStop Color="#06B6D4" Offset="1"/>
+                                <GradientStop Color="#4F46E5" Offset="0.0"/>
+                                <GradientStop Color="#7C3AED" Offset="0.2"/>
+                                <GradientStop Color="#EC4899" Offset="0.4"/>
+                                <GradientStop Color="#06B6D4" Offset="0.6"/>
+                                <GradientStop Color="#3B82F6" Offset="0.8"/>
+                                <GradientStop Color="#4F46E5" Offset="1.0"/>
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                         <Rectangle.RenderTransform>
@@ -375,5 +390,6 @@
         </Grid>
 
     </DockPanel>
+    </LayoutTransformControl>
 
 </Window>

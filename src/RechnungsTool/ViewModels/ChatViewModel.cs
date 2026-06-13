@@ -36,6 +36,17 @@ public partial class ChatViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SendenCommand))]
     private bool beschaeftigt;
 
+    /// <summary>Footer eingeklappt: nur Kopf- und Eingabezeile sichtbar, Verlauf ausgeblendet.</summary>
+    [ObservableProperty] private bool minimiert;
+
+    /// <summary>Gewünschte Footer-Höhe (eingeklappt vs. ausgeklappt) – vom MainWindow gebunden.</summary>
+    public double FooterHoehe => Minimiert ? 118 : 204;
+
+    partial void OnMinimiertChanged(bool value) => OnPropertyChanged(nameof(FooterHoehe));
+
+    [RelayCommand]
+    void MinimierenUmschalten() => Minimiert = !Minimiert;
+
     /// <summary>
     /// Sichtbarer „arbeitet…“-Indikator: an, solange Claude beschäftigt ist und gerade
     /// kein Text live in eine Blase einläuft (z. B. direkt nach dem Senden oder während

@@ -37,6 +37,15 @@
             "group": "build",
             "problemMatcher": "$msCompile",
             "detail": "Self-contained RechnungsTool.app nach dist/osx-arm64 (build/publish-macos.sh)"
+        },
+        {
+            "label": "release-macos",
+            "type": "shell",
+            "command": "${workspaceFolder}/build/release-macos.sh",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+            "detail": "Lokaler GitHub-Release vom Mac (baut, zippt, veröffentlicht; schneller als CI)"
         }
     ]
 }
