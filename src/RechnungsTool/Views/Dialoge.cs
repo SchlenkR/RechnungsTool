@@ -74,8 +74,9 @@ public class Dialoge : IDialoge
     static async Task GrossenDialogZeigenAsync(string titel, Avalonia.Controls.Control inhalt)
     {
         var fenster = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        var breite = Math.Max(420, (fenster?.ClientSize.Width ?? 1200) - 160);
-        var hoehe = Math.Max(320, (fenster?.ClientSize.Height ?? 800) - 160);
+        // Nur 30 px Abstand zu den Fensterkanten
+        var breite = Math.Max(420, (fenster?.ClientSize.Width ?? 1200) - 60);
+        var hoehe = Math.Max(320, (fenster?.ClientSize.Height ?? 800) - 60);
 
         // Dialog-Innenabstände (Padding, Titel, Buttonzeile) ausgleichen
         inhalt.MinWidth = breite - 48;
@@ -87,6 +88,7 @@ public class Dialoge : IDialoge
             Content = inhalt,
             CloseButtonText = "Schließen",
         };
+        dialog.Classes.Add("gross");   // zentriert den Schließen-Button (siehe App.axaml)
         dialog.Resources["ContentDialogMaxWidth"] = breite;
         dialog.Resources["ContentDialogMaxHeight"] = hoehe;
         await dialog.ShowAsync();

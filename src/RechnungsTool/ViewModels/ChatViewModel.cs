@@ -40,7 +40,7 @@ public partial class ChatViewModel : ObservableObject
     [ObservableProperty] private bool minimiert;
 
     /// <summary>Gewünschte Footer-Höhe (eingeklappt vs. ausgeklappt) – vom MainWindow gebunden.</summary>
-    public double FooterHoehe => Minimiert ? 118 : 204;
+    public double FooterHoehe => Minimiert ? 52 : 360;
 
     partial void OnMinimiertChanged(bool value) => OnPropertyChanged(nameof(FooterHoehe));
 

@@ -39,6 +39,22 @@
         </Border>
 
         <Border Classes="card">
+            <StackPanel Spacing="10">
+                <TextBlock Text="ANZEIGEGRÖSSE" Classes="cardTitle"/>
+                <TextBlock Classes="hint" TextWrapping="Wrap"
+                           Text="Skaliert die gesamte Oberfläche. Kleiner = mehr passt aufs Mal aufs Bild."/>
+                <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                    <Slider Grid.Column="0" Minimum="50" Maximum="130"
+                            TickFrequency="5" IsSnapToTickEnabled="True"
+                            Value="{Binding SkalierungProzent}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SkalierungText}"
+                               Width="56" TextAlignment="Right" VerticalAlignment="Center"
+                               FontWeight="SemiBold"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="card">
             <StackPanel Spacing="6">
                 <TextBlock Text="KONFIGURATIONSDATEI" Classes="cardTitle"/>
                 <TextBlock Text="{Binding ConfigPfad}" FontFamily="Menlo,Consolas,monospace" FontSize="12"/>

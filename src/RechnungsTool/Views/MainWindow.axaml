@@ -54,9 +54,10 @@
         </Style>
     </Window.Styles>
 
-    <LayoutTransformControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <LayoutTransformControl Name="Skalierer"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <LayoutTransformControl.LayoutTransform>
-            <!-- Gesamte Anwendung 30 % kleiner -->
+            <!-- Anzeige-Skalierung (einstellbar in den Einstellungen; im Code-behind gesetzt) -->
             <ScaleTransform ScaleX="0.7" ScaleY="0.7"/>
         </LayoutTransformControl.LayoutTransform>
     <DockPanel>

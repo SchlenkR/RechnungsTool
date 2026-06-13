@@ -12,12 +12,31 @@ public partial class EinstellungenViewModel : ViewModelBase
     [ObservableProperty] private string datenOrdner;
     [ObservableProperty] private string status = "";
 
+    /// <summary>Anzeigegröße in Prozent (Regler); wird live angewandt und gespeichert.</summary>
+    [ObservableProperty] private double skalierungProzent;
+
+    public string SkalierungText => $"{System.Math.Round(SkalierungProzent)} %";
+
     public string ConfigPfad => AppConfig.ConfigPfad;
 
     public EinstellungenViewModel(MainWindowViewModel main)
     {
         _main = main;
         datenOrdner = main.Config.DatenOrdner;
+        skalierungProzent = main.UiSkalierung * 100;
+
+        // Zoom kann auch per Menü/Tastatur geändert werden – Regler nachführen.
+        main.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.UiSkalierung))
+                SkalierungProzent = _main.UiSkalierung * 100;
+        };
+    }
+
+    partial void OnSkalierungProzentChanged(double value)
+    {
+        _main.UiSkalierungSetzen(value / 100.0);
+        OnPropertyChanged(nameof(SkalierungText));
     }
 
     [RelayCommand]

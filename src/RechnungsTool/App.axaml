@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RechnungsTool.App"
              xmlns:local="using:RechnungsTool"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:sty="using:FluentAvalonia.Styling"
              Name="RechnungsTool"
              RequestedThemeVariant="Light">
@@ -12,6 +13,12 @@
 
     <Application.Styles>
         <sty:FluentAvaloniaTheme/>
+
+        <!-- Großer Inhaltsdialog: Schließen-Button zentriert (statt voll gestreckt) -->
+        <Style Selector="ui|ContentDialog.gross /template/ Button#CloseButton">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="MinWidth" Value="140"/>
+        </Style>
 
         <!-- Wiederverwendbare Karten- und Button-Stile für einen modernen Look -->
         <Style Selector="Border.card">

@@ -36,8 +36,9 @@
             </Button>
         </Grid>
 
-        <!-- Eingabe: moderne, runde Box mit Schlagschatten -->
+        <!-- Eingabe: moderne, runde Box mit Schlagschatten (beim Einklappen ausgeblendet) -->
         <Border DockPanel.Dock="Bottom" Margin="14,8,14,14"
+                IsVisible="{Binding !Minimiert}"
                 Background="#FFFFFF" CornerRadius="22"
                 BoxShadow="0 3 16 0 #2A000000" Padding="8,5,7,5">
             <Grid ColumnDefinitions="*,Auto">

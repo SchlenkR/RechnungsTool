@@ -187,6 +187,22 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>Übersicht ausgeklappt: volle Breite, tabellarische Darstellung.</summary>
     [ObservableProperty] private bool uebersichtErweitert;
 
+    /// <summary>Anzeige-Skalierung der gesamten Oberfläche (1.0 = 100 %).</summary>
+    [ObservableProperty] private double uiSkalierung = 1.0;
+
+    /// <summary>Setzt die Anzeige-Skalierung (geklemmt) und speichert sie sofort.</summary>
+    public void UiSkalierungSetzen(double faktor)
+    {
+        UiSkalierung = System.Math.Round(System.Math.Clamp(faktor, 0.5, 1.3), 2);
+        _config.UiSkalierung = UiSkalierung;
+        _config.Speichern();
+    }
+
+    // Zoom über Menü/Tastatur (Cmd/Ctrl +, −, 0)
+    [RelayCommand] void Vergroessern() => UiSkalierungSetzen(UiSkalierung + 0.1);
+    [RelayCommand] void Verkleinern() => UiSkalierungSetzen(UiSkalierung - 0.1);
+    [RelayCommand] void ZoomZuruecksetzen() => UiSkalierungSetzen(1.0);
+
     ListenEintrag? _letzteAuswahl;
 
     [ObservableProperty]
@@ -242,6 +258,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         Dialoge = dialoge;
         _config = AppConfig.Laden();
+        UiSkalierung = _config.UiSkalierung;
         Chat = new ChatViewModel(_config.DatenOrdnerAbsolut);
         ListeAktualisieren(null);
 

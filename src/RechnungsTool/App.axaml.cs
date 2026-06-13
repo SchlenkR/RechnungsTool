@@ -66,6 +66,33 @@ public partial class App : Application
                             },
                         },
                     },
+                    new NativeMenuItem("Darstellung")
+                    {
+                        Menu = new NativeMenu
+                        {
+                            Items =
+                            {
+                                new NativeMenuItem("Vergrößern")
+                                {
+                                    Command = viewModel.VergroessernCommand,
+                                    Gesture = new Avalonia.Input.KeyGesture(
+                                        Avalonia.Input.Key.OemPlus, Avalonia.Input.KeyModifiers.Meta),
+                                },
+                                new NativeMenuItem("Verkleinern")
+                                {
+                                    Command = viewModel.VerkleinernCommand,
+                                    Gesture = new Avalonia.Input.KeyGesture(
+                                        Avalonia.Input.Key.OemMinus, Avalonia.Input.KeyModifiers.Meta),
+                                },
+                                new NativeMenuItem("Originalgröße")
+                                {
+                                    Command = viewModel.ZoomZuruecksetzenCommand,
+                                    Gesture = new Avalonia.Input.KeyGesture(
+                                        Avalonia.Input.Key.D0, Avalonia.Input.KeyModifiers.Meta),
+                                },
+                            },
+                        },
+                    },
                 },
             });
             desktop.ShutdownRequested += (_, e) =>

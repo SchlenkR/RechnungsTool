@@ -13,6 +13,9 @@ public class AppConfig
 {
     public string DatenOrdner { get; set; } = "~/Documents/Rechnungen";
 
+    /// <summary>Anzeige-Skalierung der gesamten Oberfläche (1.0 = 100 %).</summary>
+    public double UiSkalierung { get; set; } = 0.7;
+
     [JsonIgnore]
     public string DatenOrdnerAbsolut => PfadAufloesen(DatenOrdner);
 
